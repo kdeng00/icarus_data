@@ -28,11 +28,12 @@ project(icarus_data VERSION "0.0.1" DESCRIPTION "Database library used to power 
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD 14)
 
-set(SOURCES
+# set(SOURCES
     # ${CMAKE_CURRENT_LIST_DIR}/src/icarus_data/database/cover_art_repository.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/src/icarus_data/icarus_data.cpp)
+    # ${CMAKE_CURRENT_LIST_DIR}/src/icarus_data/icarus_data.cpp)
 
 
-add_library(icarus_data SHARED ${SOURCES})
+# add_library(icarus_data INTERFACE SHARED ${SOURCES})
+add_library(icarus_data INTERFACE)
 
-target_include_directories(icarus_data PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include)
+target_include_directories(icarus_data INTERFACE ${CMAKE_CURRENT_LIST_DIR}/include)
