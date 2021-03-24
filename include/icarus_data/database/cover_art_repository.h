@@ -11,21 +11,21 @@
 #include <mysql/mysql.h>
 
 #include "icarus_data/database/base_repository.h"
-// #include "type/CoverFilter.h"
 
-namespace icarus_data::database
+namespace icarus_data { namespace database {
+template<class Cover, typename Filter, class ConnStr>
+class cover_art_repository : public base_repository<ConnStr>
 {
-template<class Cover, typename ConnStr, typename Filter>
-class cover_art_repository : public base_repository {
 public:
-    cover_art_repository(const ConnString &conn_str) :
-        base_repository(conn_str)
+    using base_repo = base_repository<ConnStr>;
+    cover_art_repository(const ConnStr &conn_str) :
+        base_repo(conn_str)
     {
     }
 
     std::vector<Cover> retrieveRecords()
     {
-        auto conn = setup_connection();
+        auto conn = this->setup_connection();
         auto stmt = mysql_stmt_init(conn);
         const std::string query = "SELECT * FROM CoverArt";
 
@@ -43,7 +43,7 @@ public:
     Cover retrieve_record(Cover &cover, Filter filter = Filter::id)
     {
         std::stringstream qry;
-        auto conn = setup_connection();
+        auto conn = this->setup_connection();
         auto stmt = mysql_stmt_init(conn);
 
         qry << "SELECT * FROM CoverArt WHERE ";
@@ -91,7 +91,7 @@ public:
     
     bool doesCoverArtExist(const Cover &cover, Filter filter)
     {
-        auto conn = setup_connection();
+        auto conn = this->setup_connection();
         auto stmt = mysql_stmt_init(conn);
 
         MYSQL_BIND params[1];
@@ -142,7 +142,7 @@ public:
 
     void deleteRecord(const Cover &cov, Filter filter = Filter::id)
     {
-        auto conn = setup_connection();
+        auto conn = this->setup_connection();
         auto stmt = mysql_stmt_init(conn);
         std::cout << "delete CoverArt record\n";
         std::stringstream qry;
@@ -178,7 +178,7 @@ public:
     void saveRecord(const Cover &cov)
     {
         std::cout << "saving cover art record";
-        auto conn = setup_connection();
+        auto conn = this->setup_connection();
         auto stmt = mysql_stmt_init(conn);
 
         MYSQL_BIND params[2];
@@ -212,7 +212,7 @@ public:
     void updateRecord(const Cover &cover)
     {
         std::stringstream qry;
-        auto conn = setup_connection();
+        auto conn = this->setup_connection();
         auto stmt = mysql_stmt_init(conn);
 
         qry << "UPDATE CoverArt SET ";
@@ -337,6 +337,6 @@ private:
         return cover;
     }
 };
-}
+}}
 
 #endif

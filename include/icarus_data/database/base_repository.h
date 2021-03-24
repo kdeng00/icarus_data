@@ -3,27 +3,29 @@
 
 #include <iostream>
 #include <string>
+#include <sstream>
 
 
 #include <mysql/mysql.h>
+#include <soci/soci.h>
+#include <soci/soci-backend.h>
+#include <soci/mysql/soci-mysql.h>
 
-namespace icarus_data::database
-{
+namespace icarus_data { namespace database {
 template<class ConnStr>
 class base_repository
 {
 public:
     base_repository() = delete;
+    base_repository(const ConnStr &details) : details(details)
+    {
+    }
     base_repository(const ConnStr &details, const std::string &table_name) :
         details(details), table_name(table_name)
     {
     }
     base_repository(const std::string &path) :
         path(path)
-    {
-    }
-    base_repository(const std::string &path, std::string &&table_name) :
-        path(path), table_name(table_name)
     {
     }
 protected:
@@ -39,6 +41,24 @@ protected:
         mysql_close(conn);
         
         return true;
+    }
+
+    void create_connection(soci::session &conn)
+    {
+        auto conn_string = generate_connection_string();
+        conn.open(soci::mysql, conn_string);
+        // conn.open(*soci::factory_mysql(), conn_string);
+    }
+
+
+    std::string generate_connection_string() noexcept
+    {
+        std::stringstream qry;
+        qry << "db=" << this->details.database << " user=";
+        qry << this->details.username << " host=" << this->details.server;
+        qry << " password='" << this->details.password << "'";
+
+        return qry.str();
     }
 
 
@@ -75,6 +95,6 @@ protected:
 private:
     std::string path;
 };
-}
+}}
 
 #endif
