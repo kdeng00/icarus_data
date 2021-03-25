@@ -17,9 +17,7 @@ template<class Cover, typename Filter, class ConnStr>
 class cover_art_repository : public base_repository<ConnStr>
 {
 public:
-    using base_repo = base_repository<ConnStr>;
-    cover_art_repository(const ConnStr &conn_str) :
-        base_repo(conn_str)
+    cover_art_repository(const ConnStr &conn_str) : base_repository<ConnStr>(conn_str)
     {
     }
 

@@ -9,13 +9,13 @@
 #include <mysql/mysql.h>
 #include <soci/soci.h>
 #include <soci/soci-backend.h>
-#include <soci/mysql/soci-mysql.h>
+// #include <soci/mysql/soci-mysql.h>
 
 namespace icarus_data { namespace database {
 template<class ConnStr>
 class base_repository
 {
-public:
+protected:
     base_repository() = delete;
     base_repository(const ConnStr &details) : details(details)
     {
@@ -28,7 +28,7 @@ public:
         path(path)
     {
     }
-protected:
+
     bool test_connection()
     {
         auto *conn = setup_connection();
@@ -46,8 +46,7 @@ protected:
     void create_connection(soci::session &conn)
     {
         auto conn_string = generate_connection_string();
-        conn.open(soci::mysql, conn_string);
-        // conn.open(*soci::factory_mysql(), conn_string);
+        conn.open("mysql", conn_string);
     }
 
 

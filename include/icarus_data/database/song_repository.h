@@ -17,7 +17,9 @@ template<class Song, typename Filter, class ConnStr>
 class SongRepository : public base_repository<ConnStr>
 {
 public:
-    SongRepository(const ConnStr &conn_str) : base_repository(conn_str) { }
+    SongRepository(const ConnStr &conn_str) : base_repository<ConnStr>(conn_str)
+    {
+    }
 
 
     std::vector<Song> retrieveRecords() {

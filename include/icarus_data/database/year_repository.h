@@ -18,7 +18,7 @@ template<class Year, typename Filter, class ConnStr>
 class year_repository : public base_repository<ConnStr>
 {
 public:
-    year_repository(const ConnStr &conn_str) : base_repository(conn_str)
+    year_repository(const ConnStr &conn_str) : base_repository<ConnStr>(conn_str)
     {
     }
 

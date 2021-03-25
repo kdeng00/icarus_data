@@ -17,7 +17,9 @@ template<class Genre, typename Filter, class ConnStr>
 class GenreRepository : public base_repository<ConnStr>
 {
 public:
-    GenreRepository(const ConnStr &details) : base_repository(details) { }
+    GenreRepository(const ConnStr &details) : base_repository<ConnStr>(details)
+    {
+    }
 
 
     std::vector<Genre> retrieveRecords()

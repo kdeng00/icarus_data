@@ -17,8 +17,9 @@ template<class Artist, typename Filter, class ConnStr>
 class artist_repository : public base_repository<ConnStr>
 {
 public:
-      artist_repository(const ConnStr &conn_str) : 
-        base_repository(conn_str) { }
+    artist_repository(const ConnStr &conn_str) : base_repository<ConnStr>(conn_str)
+    {
+    }
 
 
     std::vector<Artist> retrieveRecords()

@@ -22,7 +22,7 @@ class token_repository : public base_repository<ConnStr>
 {
 public:
     token_repository(const ConnStr &conn_str) : 
-        base_repository(conn_str)
+         base_repository<ConnStr>(conn_str)
     {
         this->table_name = "Token";
     }
@@ -31,7 +31,7 @@ public:
     std::vector<Token> retrieve_all_tokens()
     {
         soci::session conn;
-        create_connection(conn);
+        this->create_connection(conn);
 
         std::stringstream qry;
         qry << "SELECT * FROM " << this->table_name;
@@ -54,9 +54,9 @@ public:
     Token retrieve_token(Token &tokn, Filter filter)
     {
         soci::session conn;
-        create_connection(conn);
+        this->create_connection(conn);
 
-        shared_ptr<rowset<soci::row>> rows = prepare_query(conn, tokn, filter);
+        std::shared_ptr<soci::rowset<soci::row>> rows = prepare_query(conn, tokn, filter);
 
         for (auto &row : *rows)
         {
@@ -82,7 +82,7 @@ public:
         using std::tm;
 
         soci::session conn;
-        create_connection(conn);
+        this->create_connection(conn);
 
         std::stringstream buff;
         buff << "INSERT INTO " << this->table_name << " (AccessToken, ";
@@ -92,7 +92,7 @@ public:
 
         const auto query = buff.str();
 
-        auto func1 = convert_time_point_to_tm<system_clock::time_point,
+        auto func1 = this->convert_time_point_to_tm<system_clock::time_point,
                                                        tm>;
 
         auto issued = func1(tokn.issued);
@@ -113,10 +113,10 @@ public:
     // Deletes Token record by id
     int delete_token(const Token &tokn, Filter filter)
     {
-        session conn;
-        create_connection(conn);
+        soci::session conn;
+        this->create_connection(conn);
 
-        std::shared_ptr<statement> stmt;
+        std::shared_ptr<soci::statement> stmt;
 
         std::stringstream qry;
         qry << "DELETE FROM " << this->table_name << " WHERE ";
@@ -127,21 +127,21 @@ public:
             {
                 qry << "TokenId = :token_id";
                 auto stt = (conn.prepare << qry.str(), soci::use(tokn.token_id, "token_id"));
-                stmt = std::make_shared<statement>(stt);
+                stmt = std::make_shared<soci::statement>(stt);
                 break;
             }
             case Filter::access_token:
             {
                 qry << "AccessToken = :access_token";
                 auto stt = (conn.prepare << qry.str(), soci::use(tokn.access_token, "access_token"));
-                stmt = std::make_shared<statement>(stt);
+                stmt = std::make_shared<soci::statement>(stt);
                 break;
             }
             case Filter::user_id:
             {
                 qry << "UserId = :user_id";
                 auto stt = (conn.prepare << qry.str(), soci::use(tokn.user_id, "user_id"));
-                stmt = std::make_shared<statement>(stt);
+                stmt = std::make_shared<soci::statement>(stt);
                 break;
             }
             case Filter::token_and_user:
@@ -149,14 +149,14 @@ public:
                 qry << "TokenId = :token_id AND UserId = :user_id";
                 auto stt = (conn.prepare << qry.str(), soci::use(tokn.token_id, "token_id"),
                         soci::use(tokn.user_id, "user_id"));
-                stmt = std::make_shared<statement>(stt);
+                stmt = std::make_shared<soci::statement>(stt);
                 break;
             }
             default:
             {
                 qry << "TokenId = :token_id";
                 auto stt = (conn.prepare << qry.str(), soci::use(tokn.token_id, "token_id"));
-                stmt = std::make_shared<statement>(stt);
+                stmt = std::make_shared<soci::statement>(stt);
                 break;
             }
         }
@@ -178,9 +178,9 @@ public:
 private:
 
 
-    std::shared_ptr<soci::rowset<soci::row>> prepare_query(session &conn, const token &tokn, TokenFilter filter)
+    std::shared_ptr<soci::rowset<soci::row>> prepare_query(soci::session &conn, const Token &tokn, Filter filter)
     {
-        stringstream qry;
+        std::stringstream qry;
         qry << "SELECT * FROM " << this->table_name << " WHERE ";
 
 
@@ -188,40 +188,40 @@ private:
 
         switch(filter)
         {
-            case type::TokenFilter::id:
+            case Filter::id:
             {
                 qry << "TokenId = :token_id";
-                rowset<soci::row> some_rows = (conn.prepare << qry.str(), soci::use(tokn.token_id, "token_id"));
-                d = std::make_shared<rowset<soci::row>>(some_rows);
+                soci::rowset<soci::row> some_rows = (conn.prepare << qry.str(), soci::use(tokn.token_id, "token_id"));
+                d = std::make_shared<soci::rowset<soci::row>>(some_rows);
                 break;
             }
-            case type::TokenFilter::access_token:
+            case Filter::access_token:
             {
                 qry << "AccessToken = :access_token";
-                rowset<soci::row> some_rows = (conn.prepare << qry.str(), soci::use(tokn.access_token, "access_token"));
-                d = std::make_shared<rowset<soci::row>>(some_rows);
+                soci::rowset<soci::row> some_rows = (conn.prepare << qry.str(), soci::use(tokn.access_token, "access_token"));
+                d = std::make_shared<soci::rowset<soci::row>>(some_rows);
                 break;
             }
-            case type::TokenFilter::user_id:
+            case Filter::user_id:
             {
                 qry << "UserId = :user_id";
-                rowset<soci::row> some_rows = (conn.prepare << qry.str(), soci::use(tokn.user_id, "user_id"));
-                d = std::make_shared<rowset<soci::row>>(some_rows);
+                soci::rowset<soci::row> some_rows = (conn.prepare << qry.str(), soci::use(tokn.user_id, "user_id"));
+                d = std::make_shared<soci::rowset<soci::row>>(some_rows);
                 break;
             }
-            case type::TokenFilter::token_and_user:
+            case Filter::token_and_user:
             {
                 qry << "TokenId = :token_id AND UserId = :user_id";
-                rowset<soci::row> some_rows = (conn.prepare << qry.str(), soci::use(tokn.token_id, "token_id"),
+                soci::rowset<soci::row> some_rows = (conn.prepare << qry.str(), soci::use(tokn.token_id, "token_id"),
                         soci::use(tokn.user_id, "user_id"));
-                d = std::make_shared<rowset<soci::row>>(some_rows);
+                d = std::make_shared<soci::rowset<soci::row>>(some_rows);
                 break;
             }
             default:
             {
                 qry << "TokenId = :token_id";
-                rowset<soci::row> some_rows = (conn.prepare << qry.str(), soci::use(tokn.token_id, "token_id"));
-                d = std::make_shared<rowset<soci::row>>(some_rows);
+                soci::rowset<soci::row> some_rows = (conn.prepare << qry.str(), soci::use(tokn.token_id, "token_id"));
+                d = std::make_shared<soci::rowset<soci::row>>(some_rows);
                 break;
             }
         }
@@ -235,14 +235,14 @@ private:
         using std::tm;
 
         std::tm tm_default;
-        string str_default("none");
+        std::string str_default("none");
         int int_default = 0;
 
-        auto func1 = convert_tm_to_time_point<std::chrono::system_clock::time_point, std::tm>;
+        auto func1 = this->convert_tm_to_time_point<std::chrono::system_clock::time_point, std::tm>;
 
         Token tokn;
         tokn.token_id = row.template get<int>("TokenId");
-        tokn.access_token = row.template get<string>("AccessToken", str_default);
+        tokn.access_token = row.template get<std::string>("AccessToken", str_default);
         auto orig_issued = row.template get<tm>("Issued", tm_default);
         auto orig_expires = row.template get<tm>("Expires", tm_default);
         tokn.refresh_token = row.template get<bool>("RefreshToken");

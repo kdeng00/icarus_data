@@ -2,10 +2,8 @@
 #define CONNECTION_STRING_H_
 
 
-#include <string>
+namespace icarus_data { namespace models {
 
-namespace icarus_data::models
-{
 template<typename Str>
 class connection_string
 {
@@ -18,6 +16,6 @@ public:
     Str Driver;
 private:
 };
-}
+}}
 
 #endif

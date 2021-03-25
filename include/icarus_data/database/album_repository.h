@@ -18,8 +18,7 @@ template<class Album, typename Filter, class ConnStr>
 class album_repository : public base_repository<ConnStr>
 {
 public:
-    album_repository(const ConnStr &conn_str) :
-        base_repository(conn_str)
+    album_repository(const ConnStr &conn_str) : base_repository<ConnStr>(conn_str)
     {
     }
 

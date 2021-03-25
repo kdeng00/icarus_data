@@ -17,8 +17,7 @@ template<class User, class PassSec, typename SaltFilter, typename Filter, class 
 class user_repository : public base_repository<ConnStr>
 {
 public:
-    user_repository(const ConnStr &conn_str) :
-                        base_repository(conn_str)
+    user_repository(const ConnStr &conn_str) : base_repository<ConnStr>(conn_str)
     {
         this->table_name = "User";
     }
