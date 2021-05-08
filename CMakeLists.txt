@@ -21,8 +21,13 @@ endif()
 
 
 if(NOT DEFINED VCPKG_TRIPLET)
-    message("VCPKG_TRIPLET has not been defined...")
-    set(VCPKG_TRIPLET "x64-linux")
+    if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+        set(MACOSX TRUE)
+        set(VCPKG_TRIPLET "x64-osx")
+    else ()
+        set(VCPKG_TRIPLET "x64-linux")
+    endif()
+
     message("Using default ${VCPKG_TRIPLET} triplet")
 endif()
 
