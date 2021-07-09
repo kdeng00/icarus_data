@@ -24,6 +24,10 @@ if(NOT DEFINED VCPKG_TRIPLET)
     if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         set(MACOSX TRUE)
         set(VCPKG_TRIPLET "x64-osx")
+		# Adding Visual C++ support. C++ 14 is the target C++ standard
+    elseif (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+        set(WINDOWS TRUE)
+        set(VCPKG_TRIPLET "x64-windows")
     else ()
         set(VCPKG_TRIPLET "x64-linux")
     endif()
@@ -41,6 +45,7 @@ set(SOCI_CONFIG_H_FILE
 
 message("soci-config path ${SOCI_CONFIG_H_FILE}")
 
+# Don't remember if I need this. Will eventually find out
 # include_directories("${CMAKE_CURRENT_LIST_DIR}/include")
 
 
