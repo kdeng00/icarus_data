@@ -9,7 +9,10 @@
 #include "icarus_data/database/token_repository.h"
 #include "icarus_data/database/user_repository.h"
 #include "icarus_data/database/year_repository.h"
+
+#include "icarus_data/models/auth.hpp"
 #include "icarus_data/models/connection_string.hpp"
+#include "icarus_data/models/music.hpp"
 
 
 namespace icarus_data

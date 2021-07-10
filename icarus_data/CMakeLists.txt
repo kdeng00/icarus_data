@@ -35,7 +35,7 @@ if(NOT DEFINED VCPKG_TRIPLET)
     message("Using default ${VCPKG_TRIPLET} triplet")
 endif()
 
-project(icarus_data VERSION "0.0.1" DESCRIPTION "Database library used to power icarus")
+project(icarus_data VERSION "0.1.0" DESCRIPTION "Database library used to power icarus")
 
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD 14)
@@ -69,7 +69,12 @@ set(LIBMYSQL_MAIN_H
 # add_library(icarus_data INTERFACE SHARED ${SOURCES})
 add_library(icarus_data INTERFACE)
 
+# Needed for libmysql
+# find_package(libmysql REQUIRED)
+# target_link_libraries(icarus_data PRIVATE ${MYSQL_LIBRARIES})
+
 target_link_libraries(icarus_data INTERFACE soci_core soci_mysql)
 target_include_directories(icarus_data INTERFACE ${CMAKE_CURRENT_LIST_DIR}/include ${SOCI_CONFIG_H_FILE})
 # target_include_directories(icarus_data INTERFACE ${SOCI_MYSQL_INCLUDE_DIRECTORIES})
 target_include_directories(icarus_data INTERFACE ${LIBMYSQL_MAIN_H})
+
