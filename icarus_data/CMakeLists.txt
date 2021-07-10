@@ -1,44 +1,40 @@
-cmake_minimum_required(VERSION 3.12)
+# cmake_minimum_required(VERSION 3.12)
 
 
-if(NOT DEFINED VCPKG_ROOT_PATH)
-    set(VCPKG_ROOT_PATH ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/vcpkg)
-endif()
+# project(icarus_data VERSION "0.1.0" DESCRIPTION "Database library used to power icarus")
 
 
-message("The vcpkg root path ${VCPKG_ROOT_PATH}")
+if(NOT DEFINED CMAKE_BUILD_TYPE)
+    message("Building for debug")
+    set(CMAKE_BUILD_TYPE DEBUG)
 
-if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
-    set(TOOLCHAIN_PATH ${VCPKG_ROOT_PATH}/scripts/buildsystems/vcpkg.cmake)
+    set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+    message("Exporting compile commands")
+elseif(DEFINED CMAKE_BUILD_TYPE)
 
-    set(CMAKE_TOOLCHAIN_FILE
-        "${TOOLCHAIN_PATH}"
-        CACHE STRING "Vcpkg toolchain file")
+    if(NOT DEFINED ${CMAKE_BUILD_TYPE})
+        message("CMAKE_BUILD_TYPE has not been defined. Defaulting to debug")
+        set(CMAKE_BUILD_TYPE DEBUG)
 
-    message("Using default toolchain file")
-endif()
-
-
-
-if(NOT DEFINED VCPKG_TRIPLET)
-    if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-        set(MACOSX TRUE)
-        set(VCPKG_TRIPLET "x64-osx")
-		# Adding Visual C++ support. C++ 14 is the target C++ standard
-    elseif (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-        set(WINDOWS TRUE)
-        set(VCPKG_TRIPLET "x64-windows")
-    else ()
-        set(VCPKG_TRIPLET "x64-linux")
+	    set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+	    message("Exporting compile commands")
+	elseif("${CMAKE_BUILD_TYPE}" STREQUAL "DEBUG")
+	    message("Building for debug")
+	
+	    set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+	    message("Exporting compile commands")
+    elseif("${CMAKE_BUILD_TYPE}" STREQUAL "RELEASE")
+        message("Building for release")
     endif()
 
-    message("Using default ${VCPKG_TRIPLET} triplet")
+    message("CMAKE_BUILD_TYPE is defined as ${CMAKE_BUILD_TYPE}")
 endif()
 
-project(icarus_data VERSION "0.1.0" DESCRIPTION "Database library used to power icarus")
 
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_STANDARD 14)
+# set(CMAKE_CXX_STANDARD_REQUIRED ON)
+# set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON CACHE BOOL "enforcing c++ standard requirement" FORCE)
+set(CMAKE_CXX_STANDARD 14 CACHE STRING "setting c++ standard" FORCE)
 
 set(SOCI_CONFIG_H_FILE
     "${CMAKE_BINARY_DIR}/libraries/icarus_data/3rdparty/soci/include")
@@ -66,12 +62,13 @@ add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/3rdparty/soci)
 set(LIBMYSQL_MAIN_H
     "${VCPKG_ROOT_PATH}/packages/libmysql_${VCPKG_TRIPLET}/include/mysql")
 
+find_package(libmysql REQUIRED)
+
 # add_library(icarus_data INTERFACE SHARED ${SOURCES})
 add_library(icarus_data INTERFACE)
 
 # Needed for libmysql
-# find_package(libmysql REQUIRED)
-# target_link_libraries(icarus_data PRIVATE ${MYSQL_LIBRARIES})
+target_link_libraries(icarus_data INTERFACE ${MYSQL_LIBRARIES})
 
 target_link_libraries(icarus_data INTERFACE soci_core soci_mysql)
 target_include_directories(icarus_data INTERFACE ${CMAKE_CURRENT_LIST_DIR}/include ${SOCI_CONFIG_H_FILE})
