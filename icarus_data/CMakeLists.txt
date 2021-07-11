@@ -72,7 +72,7 @@ add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/3rdparty/soci)
 add_library(icarus_data INTERFACE)
 
 # Needed for libmysql
-target_link_libraries(icarus_data INTERFACE ${MYSQL_LIBRARIES})
+target_link_libraries(icarus_data PRIVATE ${MYSQL_LIBRARIES})
 target_link_libraries(icarus_data INTERFACE soci_core soci_mysql)
 # target_link_libraries(icarus_data INTERFACE SOCI::soci_core SOCI::soci_odbc SOCI::soci_empty)
 target_include_directories(icarus_data INTERFACE ${CMAKE_CURRENT_LIST_DIR}/include ${SOCI_CONFIG_H_FILE})

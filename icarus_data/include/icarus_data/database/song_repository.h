@@ -502,7 +502,8 @@ private:
         constexpr auto valueCount = 16;
         std::shared_ptr<MYSQL_BIND> values((MYSQL_BIND*) std::calloc(valueCount, sizeof(MYSQL_BIND)));
         unsigned long len[valueCount];
-        my_bool nullRes[valueCount];
+        // my_bool nullRes[valueCount];
+        char nullRes[valAmt];
 
 
         values.get()[0].buffer_type = MYSQL_TYPE_LONG;

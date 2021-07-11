@@ -265,7 +265,8 @@ private:
 
         constexpr auto valAmt = 2;
         unsigned long len[valAmt];
-        my_bool nullRes[valAmt];
+        // my_bool nullRes[valAmt];
+        char nullRes[valAmt];
 
         for (auto status = 0; status == 0; status = mysql_stmt_next_result(stmt))
         {
