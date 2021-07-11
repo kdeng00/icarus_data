@@ -20,21 +20,21 @@ template<typename Str>
 class login_result
 {
 public:
-	int user_dd;
-	Str username;
-	Str access_token;
-	Str token_type;
-	Str message;
-	int expiration;
+    int user_dd;
+    Str username;
+    Str access_token;
+    Str token_type;
+    Str message;
+    int expiration;
 };
 
 template<typename Str>
 class register_result {
 public:
-	Str username;
-	// TODO: Look into another way of expressing registration without using a bool
-	bool registered;
-	Str message;
+    Str username;
+    // TODO: Look into another way of expressing registration without using a bool
+    bool registered;
+    Str message;
 };
 
 template<typename Str>
@@ -54,10 +54,10 @@ template<typename Str>
 class pass_sec {
 public:
 
-	int id;
-	Str hash_password;
-	Str salt;
-	int user_id;
+    int id;
+    Str hash_password;
+    Str salt;
+    int user_id;
 };
 
 }}
