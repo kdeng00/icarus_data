@@ -29,7 +29,7 @@ public:
     Str album;
     Str album_artist;
     Str genre;
-    int year
+    int year;
     long duration;
     int track;
     int disc;

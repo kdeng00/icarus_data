@@ -28,8 +28,25 @@ endif()
 set(CMAKE_CXX_STANDARD_REQUIRED ON CACHE BOOL "enforcing c++ standard requirement" FORCE)
 set(CMAKE_CXX_STANDARD 14 CACHE STRING "setting c++ standard" FORCE)
 
-set(SOCI_CONFIG_H_FILE
-    "${CMAKE_BINARY_DIR}/libraries/icarus_data/3rdparty/soci/include")
+
+
+set(LIBMYSQL_MAIN_H
+    "${VCPKG_ROOT_PATH}/packages/libmysql_${VCPKG_TRIPLET}/include")
+
+message("MySQL path ${LIBMYSQL_MAIN_H}")
+
+find_package(libmysql REQUIRED)
+# find_package(SOCI CONFIG REQUIRED)
+
+
+if(NOT DEFINED ICARUS_DATA_BUILD_OUTPUT)
+    set(SOCI_CONFIG_H_FILE
+        "${CMAKE_BINARY_DIR}/libraries/icarus_data/3rdparty/soci/include")
+else()
+    set(SOCI_CONFIG_H_FILE
+        "${ICARUS_DATA_BUILD_OUTPUT}/3rdparty/soci/include")
+endif()
+
 
 message("soci-config path ${SOCI_CONFIG_H_FILE}")
 
@@ -50,10 +67,6 @@ set(WITH_ORACLE OFF CACHE BOOL "enable oracle" FORCE)
 
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/3rdparty/soci)
 
-set(LIBMYSQL_MAIN_H
-    "${VCPKG_ROOT_PATH}/packages/libmysql_${VCPKG_TRIPLET}/include/mysql")
-
-find_package(libmysql REQUIRED)
 
 # add_library(icarus_data INTERFACE SHARED ${SOURCES})
 add_library(icarus_data INTERFACE)
@@ -61,6 +74,9 @@ add_library(icarus_data INTERFACE)
 # Needed for libmysql
 target_link_libraries(icarus_data INTERFACE ${MYSQL_LIBRARIES})
 target_link_libraries(icarus_data INTERFACE soci_core soci_mysql)
+# target_link_libraries(icarus_data INTERFACE SOCI::soci_core SOCI::soci_odbc SOCI::soci_empty)
 target_include_directories(icarus_data INTERFACE ${CMAKE_CURRENT_LIST_DIR}/include ${SOCI_CONFIG_H_FILE})
+# target_include_directories(icarus_data INTERFACE ${CMAKE_CURRENT_LIST_DIR}/include)
 target_include_directories(icarus_data INTERFACE ${LIBMYSQL_MAIN_H})
+
 

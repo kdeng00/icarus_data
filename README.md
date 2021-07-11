@@ -37,6 +37,20 @@ Build the library
 ```Bash
 mkdir build
 cd build
-cmake .. -DVCPKG_ROOT_PATH=/root/vcpkg/path
-cmake --build . --config debug
 ```
+
+### Linux
+
+```Shell
+cmake .. -DVCPKG_ROOT_PATH=/root/vcpkg/path
+cmake --build . -j --config debug
+```
+
+### Windows
+
+```Shell
+cmake -G "Visual Studio 14 2015 Win64" -DVCPKG_ROOT_PATH=D:/root/vcpkg/path
+cmake --build . -j --config debug
+```
+
+
