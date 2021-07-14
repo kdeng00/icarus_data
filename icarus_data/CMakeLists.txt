@@ -36,7 +36,6 @@ set(LIBMYSQL_MAIN_H
 message("MySQL path ${LIBMYSQL_MAIN_H}")
 
 find_package(libmysql REQUIRED)
-# find_package(SOCI CONFIG REQUIRED)
 
 
 if(NOT DEFINED ICARUS_DATA_BUILD_OUTPUT)
@@ -74,7 +73,6 @@ add_library(icarus_data INTERFACE)
 # Needed for libmysql
 target_link_libraries(icarus_data INTERFACE ${MYSQL_LIBRARIES})
 target_link_libraries(icarus_data INTERFACE soci_core soci_mysql)
-# target_link_libraries(icarus_data INTERFACE SOCI::soci_core SOCI::soci_odbc SOCI::soci_empty)
 target_include_directories(icarus_data INTERFACE ${CMAKE_CURRENT_LIST_DIR}/include ${SOCI_CONFIG_H_FILE})
 # target_include_directories(icarus_data INTERFACE ${CMAKE_CURRENT_LIST_DIR}/include)
 target_include_directories(icarus_data INTERFACE ${LIBMYSQL_MAIN_H})
