@@ -24,27 +24,20 @@ public:
 
         qry << "SELECT * FROM User WHERE ";
 
-        MYSQL_BIND params[1];
-        std::memset(params, 0, sizeof(params));
+        std::shared_ptr<MYSQL_BIND> params((MYSQL_BIND*) std::calloc(1, sizeof(MYSQL_BIND)));
 
         auto userLength = usr.username.size();
         switch (filter) {
-        case Filter::id:
+        case Filter::ID:
             qry << "UserId = ?";
 
-            params[0].buffer_type = MYSQL_TYPE_LONG;
-            params[0].buffer = (char*)&usr.id;
-            params[0].length = nullptr;
-            params[0].is_null = 0;
+            repository_utility::construct_param_long(params, MYSQL_TYPE_LONG, usr.id, 0);
 
             break;
-        case Filter::username:
+        case Filter::USERNAME:
             qry << "Username = ?";
 
-            params[0].buffer_type = MYSQL_TYPE_STRING;
-            params[0].buffer = (char*)usr.username.c_str();
-            params[0].length = &userLength;
-            params[0].is_null = 0;
+            repository_utility::construct_param_string(params, MYSQL_TYPE_STRING, usr.username, 0, userLength);
            break;
         default:
             break;
@@ -54,7 +47,7 @@ public:
 
         const auto query = qry.str();
         auto status = mysql_stmt_prepare(stmt, query.c_str(), query.size());
-        status = mysql_stmt_bind_param(stmt, params);
+        status = mysql_stmt_bind_param(stmt, params.get());
         status = mysql_stmt_execute(stmt);
 
         usr = parseRecord(stmt);
@@ -72,17 +65,13 @@ public:
 
         qry << "SELECT * FROM Salt WHERE ";
 
-        MYSQL_BIND params[1];
-        std::memset(params, 0, sizeof(params));
+        std::shared_ptr<MYSQL_BIND> params((MYSQL_BIND*) std::calloc(1, sizeof(MYSQL_BIND)));
 
         switch (filter) {
-        case SaltFilter::userId:
+        case SaltFilter::ID:
             qry << "UserId = ?";
 
-            params[0].buffer_type = MYSQL_TYPE_LONG;
-            params[0].buffer = (char*)&userSec.user_id;
-            params[0].length = 0;
-            params[0].is_null = 0;
+            repository_utility::construct_param_long(params, MYSQL_TYPE_LONG, userSec.user_id, 0);
             break;
         default:
             break;
@@ -92,7 +81,7 @@ public:
 
         const auto query = qry.str();
         auto status = mysql_stmt_prepare(stmt, query.c_str(), query.size());
-        status = mysql_stmt_bind_param(stmt, params);
+        status = mysql_stmt_bind_param(stmt, params.get());
         status = mysql_stmt_execute(stmt);
 
         userSec = parseSaltRecord(stmt);
@@ -111,18 +100,21 @@ public:
 
         qry << "SELECT * FROM User WHERE ";
 
-        MYSQL_BIND params[1];
-        std::memset(params, 0, sizeof(params));
+        std::shared_ptr<MYSQL_BIND> params((MYSQL_BIND*) std::calloc(1, sizeof(MYSQL_BIND)));
 
         auto userLength = user.username.size();
         switch (filter) {
         case Filter::username:
             qry << "Username = ?";
 
+            /**
             params[0].buffer_type = MYSQL_TYPE_STRING;
             params[0].buffer = (char*)user.username.c_str();
             params[0].length = &userLength;
             params[0].is_null = 0;
+            */
+
+            repository_utility::construct_param_long(params, MYSQL_TYPE_STRING, user.username, 0, userLength);
             break;
         default:
             break;
@@ -132,7 +124,7 @@ public:
 
         const auto query = qry.str();
         auto status = mysql_stmt_prepare(stmt, query.c_str(), query.size());
-        status = mysql_stmt_bind_param(stmt, params);
+        status = mysql_stmt_bind_param(stmt, params.get());
         status = mysql_stmt_execute(stmt);
 
         mysql_stmt_store_result(stmt);
@@ -283,34 +275,23 @@ private:
             std::tuple<char*, char*, char*, char*, char*, char*> &us)
     {
         std::shared_ptr<MYSQL_BIND> values((MYSQL_BIND*) std::calloc(7, sizeof(MYSQL_BIND)));
-        constexpr auto strLen = 1024;
+        long unsigned int strLen = 1024;
 
-        values.get()[0].buffer_type = MYSQL_TYPE_LONG;
-        values.get()[0].buffer = (char*)&user.id;
+        repository_utility::construct_param_bind_long(values, MYSQL_TYPE_LONG, user.id, 0);
 
-        values.get()[1].buffer_type = MYSQL_TYPE_STRING;
-        values.get()[1].buffer = (char*)std::get<0>(us);
-        values.get()[1].buffer_length = strLen;
+        repository_utility::construct_param_bind_cstring(values, MYSQL_TYPE_STRING, std::get<0>(us), 1, strLen);
 
-        values.get()[2].buffer_type = MYSQL_TYPE_STRING;
-        values.get()[2].buffer = (char*)std::get<1>(us);
-        values.get()[2].buffer_length = strLen;
+        repository_utility::construct_param_bind_cstring(values, MYSQL_TYPE_STRING, std::get<1>(us), 2, strLen);
 
-        values.get()[3].buffer_type = MYSQL_TYPE_STRING;
-        values.get()[3].buffer = (char*)std::get<2>(us);
-        values.get()[3].buffer_length = strLen;
+        repository_utility::construct_param_bind_cstring(values, MYSQL_TYPE_STRING, std::get<2>(us), 3, strLen);
 
-        values.get()[4].buffer_type = MYSQL_TYPE_STRING;
-        values.get()[4].buffer = (char*)std::get<3>(us);
-        values.get()[4].buffer_length = strLen;
+        repository_utility::construct_param_bind_cstring(values, MYSQL_TYPE_STRING, std::get<3>(us), 4, strLen);
 
-        values.get()[5].buffer_type = MYSQL_TYPE_STRING;
-        values.get()[5].buffer = (char*)std::get<4>(us);
-        values.get()[5].buffer_length = strLen;
+        repository_utility::construct_param_bind_cstring(values, MYSQL_TYPE_STRING, std::get<4>(us), 5, strLen);
 
-        values.get()[6].buffer_type = MYSQL_TYPE_STRING;
-        values.get()[6].buffer = (char*)std::get<5>(us);
-        values.get()[6].buffer_length = strLen;
+        // auto &tmp = std::get<5>(us);
+
+        repository_utility::construct_param_bind_cstring(values, MYSQL_TYPE_STRING, std::get<5>(us), 6, strLen);
 
         return values;
     }
@@ -321,6 +302,7 @@ private:
 
         values.get()[0].buffer_type = MYSQL_TYPE_LONG;
         values.get()[0].buffer = (char*)&userSalt.id;
+
 
         values.get()[1].buffer_type = MYSQL_TYPE_STRING;
         values.get()[1].buffer = (char*)salt;

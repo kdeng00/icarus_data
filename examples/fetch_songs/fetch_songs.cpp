@@ -3,6 +3,7 @@
 #include <vector>
 #include <algorithm>
 
+#include "example.hpp"
 #include "icarus_data/icarus_data.h"
 
 using std::cout;
@@ -61,17 +62,10 @@ void print_songs(const Con songs)
 
 int main(int argc, char **argv)
 {
-    cout << "fetch_songs\n";
+    const std::string name("fetch_songs");
+    example::count_check(argc, name);
 
-    if (argc < 5)
-    {
-        cout << "Pass database connection details like so:\n";
-        cout << "[host] [database] [username] [password]\n";
-
-        return -1;
-    }
-
-    const auto conn_str = test_connection_string(argv);
+    const auto conn_str = example::test_connection_string<conn_string>(argv);
 
     auto song_repo = song_repository(conn_str);
 

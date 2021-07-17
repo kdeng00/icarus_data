@@ -52,16 +52,19 @@ message("Root of icarus_data ${ICARUS_DATA_ROOT}")
 set(ICARUS_DATA_INCLUDE "${ICARUS_DATA_ROOT}/icarus_data/include") 
 message("icarus_data include ${ICARUS_DATA_INCLUDE}")
 
-include_directories(${ICARUS_DATA_INCLUDE})
+include_directories(${ICARUS_DATA_INCLUDE} ${ICARUS_DATA_ROOT}/examples)
 
 set(ICARUS_DATA_BUILD_OUTPUT ${CMAKE_BINARY_DIR}/subdirs)
 
 add_subdirectory(${ICARUS_DATA_ROOT}/icarus_data ${ICARUS_DATA_BUILD_OUTPUT})
 
+# TODO: Add examples that cover fetching, updating, creating, and deleting
 
 set(EXAMPLES
+    fetch_albums
     fetch_songs
-    fetch_albums)
+    fetch_users
+)
 
 foreach (example ${EXAMPLES})
     add_executable(${example} ${example}/${example}.cpp)
