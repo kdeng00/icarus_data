@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.10.2)
 
+# NOTE: Possibly might have to set a cmake_policy
+
+
 if(NOT DEFINED VCPKG_ROOT_PATH)
     set(VCPKG_ROOT_PATH ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/vcpkg)
 endif()
@@ -29,6 +32,7 @@ if(NOT DEFINED VCPKG_TRIPLET)
         set(VCPKG_TRIPLET "x64-osx")
     elseif (${CMAKE_HOST_SYSTEM_NAME} MATCHES "Windows")
         # Adding Visual C++ support
+        # Has not been implemented
         set(WINDOWS TRUE)
         set(VCPKG_TRIPLET "x64-windows")
     else ()
@@ -38,29 +42,32 @@ if(NOT DEFINED VCPKG_TRIPLET)
     message("Using default ${VCPKG_TRIPLET} triplet")
 endif()
 
-
-project(fetch_songs)
-
+project(examples)
 
 
-set(ICARUS_DATA_INCLUDE "${CMAKE_CURRENT_LIST_DIR}/../../icarus_data/include") 
+set(ICARUS_DATA_ROOT
+    "${CMAKE_CURRENT_LIST_DIR}/..")
+message("Root of icarus_data ${ICARUS_DATA_ROOT}")
+
+set(ICARUS_DATA_INCLUDE "${ICARUS_DATA_ROOT}/icarus_data/include") 
 message("icarus_data include ${ICARUS_DATA_INCLUDE}")
 
 include_directories(${ICARUS_DATA_INCLUDE})
 
-# TODO: Get a working example and then merge this to the master/main branch
-
-# add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/json)
-# add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/tinyxml2)
-
-# icarus_data lib
-# add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/icarus_data)
-
 set(ICARUS_DATA_BUILD_OUTPUT ${CMAKE_BINARY_DIR}/subdirs)
 
 # add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/../../icarus_data ${CMAKE_BINARY_DIR}/subdir_bin)
-add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/../../icarus_data ${ICARUS_DATA_BUILD_OUTPUT})
+# add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/../../icarus_data ${ICARUS_DATA_BUILD_OUTPUT})
+add_subdirectory(${ICARUS_DATA_ROOT}/icarus_data ${ICARUS_DATA_BUILD_OUTPUT})
 
-add_executable(fetch_songs fetch_songs.cpp)
 
-target_link_libraries(fetch_songs PRIVATE icarus_data)
+set(EXAMPLES
+    fetch_songs
+    fetch_albums)
+
+foreach (example ${EXAMPLES})
+    add_executable(${example} ${example}/${example}.cpp)
+    target_link_libraries(${example} PRIVATE icarus_data)
+endforeach()
+
+add_custom_target(examples ALL DEPENDS ${EXAMPLES})
