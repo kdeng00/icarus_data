@@ -56,8 +56,6 @@ include_directories(${ICARUS_DATA_INCLUDE})
 
 set(ICARUS_DATA_BUILD_OUTPUT ${CMAKE_BINARY_DIR}/subdirs)
 
-# add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/../../icarus_data ${CMAKE_BINARY_DIR}/subdir_bin)
-# add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/../../icarus_data ${ICARUS_DATA_BUILD_OUTPUT})
 add_subdirectory(${ICARUS_DATA_ROOT}/icarus_data ${ICARUS_DATA_BUILD_OUTPUT})
 
 

@@ -44,5 +44,6 @@ endif()
 # C++ 14 is the target C++ standard
 project(icarus_data VERSION "0.1.0" DESCRIPTION "Database library used to power icarus")
 
+# TODO: Build or have the option to build the examples
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/icarus_data)
