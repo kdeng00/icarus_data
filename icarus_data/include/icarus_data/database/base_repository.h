@@ -3,7 +3,10 @@
 
 #include <iostream>
 #include <string>
+#include <cstring>
 #include <sstream>
+#include <memory>
+#include <vector>
 
 
 #include <mysql/mysql.h>
@@ -76,6 +79,36 @@ protected:
 
         return conn;
     }
+
+    /**
+    template<typename MySQLDataType = enum_field_types, typename type = int>
+    MYSQL_BIND construct_param(MySQLDataType buffer_type, const type buffer)
+    {
+        MYSQL_BIND param;
+        // std::memset(param, 0, sizeof(param));
+        //
+        param.buffer_type = buffer_type;
+        //
+        switch (buffer_type)
+        {
+            case MYSQL_TYPE_LONG:
+                param.buffer = (char *)&buffer;
+                param.length = 0;
+                param.is_null = 0;
+                break;
+            case MYSQL_TYPE_STRING:
+                param.buffer_type = buffer_type;
+                // param.buffer = (char *)buffer.c_str();
+                // param.length = &buffer.size();
+                param.is_null = 0;
+            default:
+                break;
+        }
+
+        return param;
+    }
+    */
+
     MYSQL_RES *perform_query(MYSQL *conn, const std::string &query)
     {
         // send the query to the database

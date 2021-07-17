@@ -11,9 +11,13 @@
 #include <mysql/mysql.h>
 
 #include "icarus_data/database/base_repository.h"
+#include "icarus_data/database/repoository_utility.h"
 
 namespace icarus_data { namespace database {
 template<class Song, typename Filter, class ConnStr>
+
+// TODO: Start using the construct_params_* functions from the repository_utility class
+// Cuts down on code size
 class song_repository : public base_repository<ConnStr>
 {
 public:
@@ -50,21 +54,20 @@ public:
 
         auto valueFilterCount = 1;
         switch (filter) {
-            case Filter::titleAndArtist:
+            case Filter::TITLE_AND_ARTIST:
                 valueFilterCount = 2;
                 break;
-            case Filter::titleAlbArtistAlbum:
+            case Filter::TITLE_ALBUM_ARTIST_ALBUM:
                 valueFilterCount = 3;
                 break;
-            case Filter::titleAlbArtistAlbumTrack:
+            case Filter::TITLE_ALBUM_ARTIST_ALBUM_TRACK:
                 valueFilterCount = 4;
                 break;
             default:
                 break;
         }
 
-        MYSQL_BIND params[valueFilterCount];
-        memset(params, 0, sizeof(params));
+        std::shared_ptr<MYSQL_BIND> params((MYSQL_BIND*) std::calloc(valueFilterCount, sizeof(MYSQL_BIND)));
 
         qry << "SELECT sng.*, alb.Artist AS AlbumArtist FROM Song sng ";
         qry << "LEFT JOIN Album alb ON sng.AlbumId=alb.AlbumId WHERE ";
@@ -73,79 +76,54 @@ public:
         auto artistLength = song.artist.size();
         auto albumArtistLength = song.album_artist.size();
         auto albumLength = song.album.size();
+
         switch (filter) {
-            case Filter::id:
+            case Filter::ID:
                 qry << "sng.SongId = ?";
 
-                params[0].buffer_type = MYSQL_TYPE_LONG;
-                params[0].buffer = (char*)&song.id;
-                params[0].length = 0;
-                params[0].is_null = 0;;
+                repository_utility::construct_param_long<std::shared_ptr<MYSQL_BIND>, 
+                    enum_field_types, int>(params, MYSQL_TYPE_LONG, song.id, 0);
                 break;
-            case Filter::title:
+            case Filter::TITLE:
                 qry << "sng.Title = ?";
 
-                params[0].buffer_type = MYSQL_TYPE_STRING;
-                params[0].buffer = (char*)song.title.c_str();
-                params[0].length = &titleLength;
-                params[0].is_null = 0;
+                repository_utility::construct_param_string<std::shared_ptr<MYSQL_BIND>, 
+                    enum_field_types, std::string>(params, MYSQL_TYPE_STRING, song.title, 0, titleLength);
                 break;
-            case Filter::titleAndArtist:
+            case Filter::TITLE_AND_ARTIST:
                 qry << "sng.Title = ? AND sng.Artist = ?";
 
-                params[0].buffer_type = MYSQL_TYPE_STRING;
-                params[0].buffer = (char*)song.title.c_str();
-                params[0].length = &titleLength;
-                params[0].is_null = 0;
-
-                params[1].buffer_type = MYSQL_TYPE_STRING;
-                params[1].buffer = (char*)song.artist.c_str();
-                params[1].length = &artistLength;
-                params[1].is_null = 0;
+                repository_utility::construct_param_string<std::shared_ptr<MYSQL_BIND>, 
+                    enum_field_types, std::string>(params, MYSQL_TYPE_STRING, song.title, 0, titleLength);
+                repository_utility::construct_param_string<std::shared_ptr<MYSQL_BIND>, 
+                    enum_field_types, std::string>(params, MYSQL_TYPE_STRING, song.artist, 1, artistLength);
 
                 std::cout << "title: " << song.title.c_str() << " artist: " << 
                     song.artist.c_str() << "\n";
                 break;
-            case Filter::titleAlbArtistAlbum:
+            case Filter::TITLE_ALBUM_ARTIST_ALBUM:
                 qry << "sng.Title = ? AND sng.Album = ? AND alb.Artist = ?";
 
-                params[0].buffer_type = MYSQL_TYPE_STRING;
-                params[0].buffer = (char*)song.title.c_str();
-                params[0].length = &titleLength;
-                params[0].is_null = 0;
+                repository_utility::construct_param_string<std::shared_ptr<MYSQL_BIND>, 
+                    enum_field_types, std::string>(params, MYSQL_TYPE_STRING, song.title, 0, titleLength);
+                repository_utility::construct_param_string<std::shared_ptr<MYSQL_BIND>, 
+                    enum_field_types, std::string>(params, MYSQL_TYPE_STRING, song.album, 1, artistLength);
+                repository_utility::construct_param_string<std::shared_ptr<MYSQL_BIND>, 
+                    enum_field_types, std::string>(params, MYSQL_TYPE_STRING, song.album_artist, 2, artistLength);
 
-                params[1].buffer_type = MYSQL_TYPE_STRING;
-                params[1].buffer = (char*)song.album.c_str();
-                params[1].length = &albumLength;
-                params[1].is_null = 0;
-
-                params[2].buffer_type = MYSQL_TYPE_STRING;
-                params[2].buffer = (char*)song.album_artist.c_str();
-                params[2].length = &albumArtistLength;
-                params[2].is_null = 0;
                 break;
-            case Filter::titleAlbArtistAlbumTrack:
+            case Filter::TITLE_ALBUM_ARTIST_ALBUM_TRACK:
                 qry << "sng.Title = ? AND sng.Album = ? AND alb.Artist = ? AND sng.Track = ?";
 
-                params[0].buffer_type = MYSQL_TYPE_STRING;
-                params[0].buffer = (char*)song.title.c_str();
-                params[0].length = &titleLength;
-                params[0].is_null = 0;
+                repository_utility::construct_param_string<std::shared_ptr<MYSQL_BIND>, 
+                    enum_field_types, std::string>(params, MYSQL_TYPE_STRING, song.title, 0, titleLength);
+                repository_utility::construct_param_string<std::shared_ptr<MYSQL_BIND>, 
+                    enum_field_types, std::string>(params, MYSQL_TYPE_STRING, song.album, 1, albumLength);
+                repository_utility::construct_param_string<std::shared_ptr<MYSQL_BIND>, 
+                    enum_field_types, std::string>(params, MYSQL_TYPE_STRING, song.album_artist, 2, albumArtistLength);
+                repository_utility::construct_param_long<std::shared_ptr<MYSQL_BIND>, 
+                    enum_field_types, int>(params, MYSQL_TYPE_STRING, song.track, 3);
 
-                params[1].buffer_type = MYSQL_TYPE_STRING;
-                params[1].buffer = (char*)song.album.c_str();
-                params[1].length = &titleLength;
-                params[1].is_null = 0;
-
-                params[2].buffer_type = MYSQL_TYPE_STRING;
-                params[2].buffer = (char*)song.album_artist.c_str();
-                params[2].length = &titleLength;
-                params[2].is_null = 0;
-
-                params[3].buffer_type = MYSQL_TYPE_LONG;
-                params[3].buffer = (char*)&song.track;
-                params[3].length = 0;
-                params[3].is_null = 0;;
                 break;
             default:
                 break;
@@ -155,7 +133,7 @@ public:
 
         const auto query = qry.str();
         auto status = mysql_stmt_prepare(stmt, query.c_str(), query.size());
-        status = mysql_stmt_bind_param(stmt, params);
+        status = mysql_stmt_bind_param(stmt, params.get());
         status = mysql_stmt_execute(stmt);
 
         std::cout << "the query has been performed\n";
@@ -176,13 +154,13 @@ public:
         auto stmt = mysql_stmt_init(conn);
         auto valueFilterCount = 1;
         switch (filter) {
-            case Filter::titleAndArtist:
+            case Filter::TITLE_AND_ARTIST:
                 valueFilterCount = 2;
                 break;
-            case Filter::titleAlbArtistAlbum:
+            case Filter::TITLE_ALBUM_ARTIST_ALBUM:
                 valueFilterCount = 3;
                 break;
-            case Filter::titleAlbArtistAlbumTrack:
+            case Filter::TITLE_ALBUM_ARTIST_ALBUM_TRACK:
                 valueFilterCount = 4;
                 break;
             default:
@@ -201,7 +179,7 @@ public:
         auto albumArtistLength = song.album_artist.size();
         auto albumLength = song.album.size();
         switch (filter) {
-            case Filter::id:
+            case Filter::ID:
                 qry << "sng.SongId = ?";
 
                 params[0].buffer_type = MYSQL_TYPE_LONG;
@@ -217,7 +195,7 @@ public:
                 params[0].length = &titleLength;
                 params[0].is_null = 0;
                 break;
-            case Filter::titleAndArtist:
+            case Filter::TITLE_AND_ARTIST:
                 qry << "sng.Title = ? AND sng.Artist = ?";
 
                 params[0].buffer_type = MYSQL_TYPE_STRING;
@@ -230,7 +208,7 @@ public:
                 params[1].length = &artistLength;
                 params[1].is_null = 0;
                 break;
-            case Filter::titleAlbArtistAlbum:
+            case Filter::TITLE_ALBUM_ARTIST_ALBUM:
                 qry << "sng.Title = ? AND sng.Album = ? AND alb.Artist = ?";
 
                 params[0].buffer_type = MYSQL_TYPE_STRING;
@@ -248,7 +226,7 @@ public:
                 params[1].length = &albumArtistLength;
                 params[1].is_null = 0;
                 break;
-            case Filter::titleAlbArtistAlbumTrack:
+            case Filter::TITLE_ALBUM_ARTIST_ALBUM_TRACK:
                 qry << "sng.Title = ? AND sng.Album = ? AND alb.Artist = ? AND sng.Track = ?";
 
                 params[0].buffer_type = MYSQL_TYPE_STRING;
@@ -503,7 +481,6 @@ private:
         constexpr auto valueCount = 16;
         std::shared_ptr<MYSQL_BIND> values((MYSQL_BIND*) std::calloc(valueCount, sizeof(MYSQL_BIND)));
         unsigned long len[valueCount];
-        // my_bool nullRes[valueCount];
         char nullRes[valueCount];
 
 
@@ -586,7 +563,6 @@ private:
         songs.reserve(c);
 
         auto status = 0;
-        auto time = 0;
 
         while (status == 0) {
             if (::mysql_stmt_field_count(stmt) > 0) {
@@ -604,12 +580,7 @@ private:
                         break;
                     }
                 
-                    song.title = std::get<0>(metaBuff);
-                    song.artist = std::get<1>(metaBuff);
-                    song.album = std::get<2>(metaBuff);
-                    song.genre = std::get<3>(metaBuff);
-                    song.song_path = std::get<4>(metaBuff);
-                    song.album_artist = std::get<5>(metaBuff);
+                    parse_record_string_field(song, metaBuff);
 
                     songs.push_back(song);
                 }
@@ -624,23 +595,31 @@ private:
 
     Song parseRecord(MYSQL_STMT *stmt) {
         mysql_stmt_store_result(stmt);
+
         std::cout << "amount of rows: " << mysql_stmt_num_rows(stmt) << "\n";
+
         Song song;
+
         auto metaBuff = metadataBuffer();
         auto bindedValues = valueBind(song, metaBuff);
         auto status = mysql_stmt_bind_result(stmt, bindedValues.get());
         status = mysql_stmt_fetch(stmt);
 
+        parse_record_string_field(song, metaBuff);
+        
+        std::cout << "done parsing record\n";
+
+        return song;
+    }
+
+    void parse_record_string_field(Song &song, std::tuple<char *, char *, char *, char *, char *, char *> metaBuff)
+    {
         song.title = std::get<0>(metaBuff);
         song.artist = std::get<1>(metaBuff);
         song.album = std::get<2>(metaBuff);
         song.genre = std::get<3>(metaBuff);
         song.song_path = std::get<4>(metaBuff);
         song.album_artist = std::get<5>(metaBuff);
-        
-        std::cout << "done parsing record\n";
-
-        return song;
     }
 };
 }}

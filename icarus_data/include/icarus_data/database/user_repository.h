@@ -1,13 +1,6 @@
 #ifndef USERREPOSITORY_H_
 #define USERREPOSITORY_H_
 
-#include <memory>
-#include <vector>
-#include <iostream>
-#include <sstream>
-#include <string>
-#include <cstring>
-
 #include <mysql/mysql.h>
 
 #include "icarus_data/database/base_repository.h"
@@ -17,9 +10,9 @@ template<class User, class PassSec, typename SaltFilter, typename Filter, class 
 class user_repository : public base_repository<ConnStr>
 {
 public:
-    user_repository(const ConnStr &conn_str) : base_repository<ConnStr>(conn_str)
+    user_repository(const ConnStr &conn_str, const std::string table = "User") : 
+        base_repository<ConnStr>(conn_str, table)
     {
-        this->table_name = "User";
     }
 
 

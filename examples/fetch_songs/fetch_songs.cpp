@@ -24,25 +24,32 @@ conn_string test_connection_string(char **argv)
     return conn_str;
 }
 
+template<typename Song>
+void print_song(const Song song)
+{
+    cout << "ID: " << song.id << "\n";
+    cout << "Title: " << song.title << "\n";
+    cout << "Artist: " << song.artist << "\n";
+    cout << "Album: " << song.album << "\n";
+    cout << "Album Artist: " << song.album_artist << "\n";
+    cout << "Genre: " << song.genre << "\n";
+    cout << "Year: " << song.year << "\n";
+    cout << "Duration: " << song.duration << "\n";
+    cout << "Track: " << song.track << "\n";
+    cout << "Disc: " << song.disc << "\n";
+    cout << "\n";
+}
+
 template<typename Song, typename Con>
-void print_songs(Con songs)
+void print_songs(const Con songs)
 {
     if (songs.size() > 0)
     {
         cout << "Printing songs\n\n";
 
-        std::for_each(songs.begin(), songs.end(), [](song song)
+        std::for_each(songs.begin(), songs.end(), [](Song song)
         {
-            cout << "Title: " << song.title << "\n";
-            cout << "Artist: " << song.artist << "\n";
-            cout << "Album: " << song.album << "\n";
-            cout << "Album Artist: " << song.album_artist << "\n";
-            cout << "Genre: " << song.genre << "\n";
-            cout << "Year: " << song.year << "\n";
-            cout << "Duration: " << song.duration << "\n";
-            cout << "Track: " << song.track << "\n";
-            cout << "Disc: " << song.disc << "\n";
-            cout << "\n";
+            print_song<Song>(song);
         });
     }
     else
@@ -50,6 +57,7 @@ void print_songs(Con songs)
         cout << "No songs to print\n";
     }
 }
+
 
 int main(int argc, char **argv)
 {
@@ -69,6 +77,11 @@ int main(int argc, char **argv)
 
     const auto songs = song_repo.retrieveRecords();
     print_songs<song, vector<song>>(songs);
+
+    const auto song_my = song_repo.retrieveRecord(songs.at(0), icarus_data::types::song_filter::TITLE_AND_ARTIST);
+
+    cout << "Printing song:\n";
+    print_song<icarus_data::song>(song_my);
 
 
     return 0;
