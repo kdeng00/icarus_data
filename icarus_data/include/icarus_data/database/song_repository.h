@@ -14,10 +14,11 @@
 
 namespace icarus_data { namespace database {
 template<class Song, typename Filter, class ConnStr>
-class SongRepository : public base_repository<ConnStr>
+class song_repository : public base_repository<ConnStr>
 {
 public:
-    SongRepository(const ConnStr &conn_str) : base_repository<ConnStr>(conn_str)
+    song_repository(const ConnStr &conn_str, const std::string table = "Song") : 
+        base_repository<ConnStr>(conn_str, table)
     {
     }
 

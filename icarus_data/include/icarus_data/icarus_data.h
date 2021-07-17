@@ -26,7 +26,10 @@ namespace icarus_data
     using login_result = models::login_result<std::string>;
     using conn_string = models::connection_string<std::string>;
 
+    using song = models::song<std::string, unsigned char, conn_string>;
+
     using token_repository = database::token_repository<token, types::token_filter, conn_string>;
+    using song_repository = database::song_repository<song, types::song_filter, conn_string>;
 }
 
 
