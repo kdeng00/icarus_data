@@ -21,10 +21,9 @@ template<class Token, typename Filter, class ConnStr>
 class token_repository : public base_repository<ConnStr>
 {
 public:
-    token_repository(const ConnStr &conn_str) : 
-         base_repository<ConnStr>(conn_str)
+    token_repository(const ConnStr &conn_str, const std::string table = "Token") : 
+         base_repository<ConnStr>(conn_str, "Token")
     {
-        this->table_name = "Token";
     }
 
 

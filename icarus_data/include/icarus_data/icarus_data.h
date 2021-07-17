@@ -13,6 +13,8 @@
 #include "icarus_data/models/auth.hpp"
 #include "icarus_data/models/connection_string.hpp"
 #include "icarus_data/models/music.hpp"
+#include "icarus_data/types/auth.hpp"
+#include "icarus_data/types/music.hpp"
 
 #include <string>
 
@@ -20,11 +22,11 @@
 
 namespace icarus_data
 {
-    using token = models::token_type<std::string, long>;
+    using token = models::token<std::string, long>;
     using login_result = models::login_result<std::string>;
     using conn_string = models::connection_string<std::string>;
 
-    using token_repository = database::token_repository<token, int, conn_string>;
+    using token_repository = database::token_repository<token, types::token_filter, conn_string>;
 }
 
 

@@ -13,7 +13,7 @@ public:
     Str username;
     Str password;
     int port;
-    Str Driver;
+    Str driver;
 private:
 };
 }}

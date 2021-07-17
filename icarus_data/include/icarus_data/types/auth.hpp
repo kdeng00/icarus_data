@@ -27,4 +27,8 @@ enum class user_filter
     USERNAME = 1
 };
 
+enum class token_filter
+{
+};
+
 }}
