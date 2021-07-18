@@ -14,10 +14,10 @@
 
 namespace icarus_data { namespace database {
 template<class Genre, typename Filter, class ConnStr>
-class GenreRepository : public base_repository<ConnStr>
+class genre_repository : public base_repository<ConnStr>
 {
 public:
-    GenreRepository(const ConnStr &details) : base_repository<ConnStr>(details)
+    genre_repository(const ConnStr &details) : base_repository<ConnStr>(details)
     {
     }
 

@@ -181,7 +181,8 @@ public:
 
         MYSQL_BIND params[2];
         memset(params, 0, sizeof(params));
-        my_bool isNull;
+        // my_bool isNull;
+        char isNull;
 
         const std::string query = "INSERT INTO CoverArt(SongTitle, ImagePath) VALUES(?, ?)";
 

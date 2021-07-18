@@ -22,7 +22,7 @@ Bootstrap vcpkg
 3rdparty/vcpkg/bootstrap.sh
 ```
 
-or have your vcpkg root path in mind and assign it the cmake variable ``VCPKG_ROOT_PATH``
+or have your vcpkg root path in mind and assign it the cmake variable ``VCPKG_ROOT_PATH`` 
 
 
 Install your dependencies (soci is added as a subdirectory)
@@ -37,6 +37,22 @@ Build the library
 ```Bash
 mkdir build
 cd build
-cmake .. -DVCPKG_ROOT_PATH=/root/vcpkg/path
-cmake --build . --config debug
 ```
+
+### Linux
+
+```Shell
+cmake .. -DVCPKG_ROOT_PATH=/root/vcpkg/path
+make -j
+```
+
+### Windows
+
+Has not been implemented
+
+```Shell
+cmake -G "Visual Studio 14 2015 Win64" -DVCPKG_ROOT_PATH=D:/root/vcpkg/path
+cmake --build . -j --config debug
+```
+
+
