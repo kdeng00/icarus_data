@@ -25,9 +25,9 @@ public:
     }
 
     template<typename Bind = std::shared_ptr<MYSQL_BIND>, typename MySQLDataType = enum_field_types, 
-        typename type = std::string>
+        typename type = std::string, typename SizeType = long unsigned int>
     static void construct_param_string(Bind params, MySQLDataType buffer_type, const type &buffer, int pos, 
-        long unsigned int &length)
+        SizeType &length)
     {
         params.get()[pos].buffer_type = buffer_type;
         params.get()[pos].buffer = (char *)buffer.c_str();
@@ -83,6 +83,7 @@ public:
         params.get()[pos].buffer = (char *)buffer.c_str();
         params.get()[pos].buffer_length = length;
     }
+
 };
 
 }}

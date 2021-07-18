@@ -21,13 +21,13 @@ public:
 
     User retrieveUserRecord(User &usr, Filter filter)
     {
-        std::stringstream qry;
         auto conn = this->setup_connection();
         auto stmt = mysql_stmt_init(conn);
 
+        std::stringstream qry;
         qry << "SELECT * FROM User WHERE ";
 
-        std::shared_ptr<MYSQL_BIND> params((MYSQL_BIND*) std::calloc(1, sizeof(MYSQL_BIND)));
+        auto params = this->mysql_bind_init(1);
 
         auto userLength = usr.username.size();
         switch (filter) {
@@ -55,8 +55,7 @@ public:
 
         usr = parseRecord(stmt);
 
-        mysql_stmt_close(stmt);
-        mysql_close(conn);
+        this->close_mysql_connection(conn, stmt);
 
         return usr;
     }
@@ -68,7 +67,7 @@ public:
 
         qry << "SELECT * FROM Salt WHERE ";
 
-        std::shared_ptr<MYSQL_BIND> params((MYSQL_BIND*) std::calloc(1, sizeof(MYSQL_BIND)));
+        auto params = this->mysql_bind_init(1);
 
         switch (filter) {
         case SaltFilter::ID:
@@ -89,8 +88,7 @@ public:
 
         userSec = parseSaltRecord(stmt);
 
-        mysql_stmt_close(stmt);
-        mysql_close(conn);
+        this->close_mysql_connection(conn, stmt);
 
         return userSec;
     }
@@ -103,7 +101,7 @@ public:
 
         qry << "SELECT * FROM User WHERE ";
 
-        std::shared_ptr<MYSQL_BIND> params((MYSQL_BIND*) std::calloc(1, sizeof(MYSQL_BIND)));
+        auto params = this->mysql_bind_init(1);
 
         auto userLength = user.username.size();
         switch (filter) {
@@ -126,33 +124,10 @@ public:
         mysql_stmt_store_result(stmt);
         const auto rowCount = mysql_stmt_num_rows(stmt);
 
-        mysql_stmt_close(stmt);
-        mysql_close(conn);
+        this->close_mysql_connection(conn, stmt);
 
         return (rowCount > 0) ? true : false;
     }
-
-    /**
-    bool user_exists(const User &user, Filter filter)
-    {
-        soci::session conn;
-        create_connection(conn);
-
-        std::stringstream qry;
-        qry << "SELECT * FROM " << this->table_name << " WHERE ";
-        qry << "Username = :username LIMIT 1";
-
-        soci::statement stmt = (conn.prepare << qry.str(), 
-                soci::use(user.username, "username"));
-        stmt.execute();
-
-        const auto rows = stmt.get_affected_rows();
-
-        conn.close();
-
-        return (rows > 0) ? true : false;
-    }
-    */
 
     void saveUserRecord(const User &user)
     {
@@ -172,8 +147,7 @@ public:
         status = mysql_stmt_bind_param(stmt, params.get());
         status = mysql_stmt_execute(stmt);
 
-        mysql_stmt_close(stmt);
-        mysql_close(conn);
+        this->close_mysql_connection(conn, stmt);
     }
 
     void saveUserSalt(const PassSec &userSec)
@@ -195,8 +169,65 @@ public:
         status = mysql_stmt_bind_param(stmt, values.get());
         status = mysql_stmt_execute(stmt);
 
-        mysql_stmt_close(stmt);
-        mysql_close(conn);
+        this->close_mysql_connection(conn, stmt);
+    }
+
+    int delete_user(const User &user)
+    {
+        auto conn = this->setup_connection();
+        auto stmt = mysql_stmt_init(conn);
+
+        std::stringstream qry;
+        qry << "DELETE FROM " << this->tablename << " WHERE UserId = ?";
+        const auto query = qry.str();
+
+        auto params = this->mysql_bind_init(1);
+
+        repository_utility::construct_param_long(params, MYSQL_TYPE_LONG, user.id, 0);
+
+        auto status = mysql_stmt_prepare(stmt, query.c_str(), query.size());
+        status = mysql_stmt_bind_param(stmt, params);
+        status = mysql_stmt_execute(stmt);
+
+        close_mysql_connection(conn, stmt);
+
+        return status;
+    }
+
+    int update_user(const User &user)
+    {
+        auto conn = this->setup_connection();
+        auto stmt = mysql_stmt_init(conn);
+
+        std::stringstream qry;
+        qry << "UPDATE " << this->tablename << " SET Firstname = ?, LastName = ?, Email = ?, ";
+        qry << "Phone = ?, Username = ?, Password = ? ";
+        qry << "WHERE UserId = ?";
+        const auto query = qry.str();
+
+        auto status = mysql_stmt_prepare(stmt, query.c_str(), query.size());
+
+        auto params = this->mysql_bind_init(12);
+        auto mysql_string = MYSQL_TYPE_STRING;
+        auto mysql_long = MYSQL_TYPE_LONG;
+
+        // TODO: Pick up back here. Finish up Updating and Deleting for both User and Salt tables. Then
+        // move on to the music-related databases classes
+        repository_utility::construct_param_string(params, mysql_string, user.firstname, 0, user.firstname.size());
+        /**
+        repository_utility::construct_param_string(params,)
+        repository_utility::construct_param_string(params,)
+        repository_utility::construct_param_string(params,)
+        repository_utility::construct_param_string(params,)
+        repository_utility::construct_param_string(params,)
+        repository_utility::construct_param_long(params,)
+        */
+
+        status = mysql_stmt_bind_param(stmt, params.get());
+        status = mysql_stmt_execute(stmt);
+
+        this->close_mysql_connection(conn, stmt);
+
     }
 private:
     struct UserLengths;
@@ -220,7 +251,7 @@ private:
     std::shared_ptr<MYSQL_BIND> insertUserValues(const User &user, 
             std::shared_ptr<UserLengths> lengths)
     {
-        std::shared_ptr<MYSQL_BIND> values((MYSQL_BIND*) std::calloc(6, sizeof(MYSQL_BIND)));
+        auto values = this->mysql_bind_init(6);
 
         auto mysql_type = MYSQL_TYPE_STRING;
 
@@ -239,7 +270,6 @@ private:
         std::shared_ptr<MYSQL_BIND> values((MYSQL_BIND*) std::calloc(6, sizeof(MYSQL_BIND)));
 
         repository_utility::construct_user_insert_string(values, MYSQL_TYPE_STRING, passSec.hash_password, 0, lengths->saltLength);
-
         repository_utility::construct_user_insert_long(values, MYSQL_TYPE_LONG, passSec.user_id, 1);
 
         return values;
@@ -251,17 +281,11 @@ private:
         long unsigned int strLen = 1024;
 
         repository_utility::construct_param_bind_long(values, MYSQL_TYPE_LONG, user.id, 0);
-
         repository_utility::construct_param_bind_cstring(values, MYSQL_TYPE_STRING, std::get<0>(us), 1, strLen);
-
         repository_utility::construct_param_bind_cstring(values, MYSQL_TYPE_STRING, std::get<1>(us), 2, strLen);
-
         repository_utility::construct_param_bind_cstring(values, MYSQL_TYPE_STRING, std::get<2>(us), 3, strLen);
-
         repository_utility::construct_param_bind_cstring(values, MYSQL_TYPE_STRING, std::get<3>(us), 4, strLen);
-
         repository_utility::construct_param_bind_cstring(values, MYSQL_TYPE_STRING, std::get<4>(us), 5, strLen);
-
         repository_utility::construct_param_bind_cstring(values, MYSQL_TYPE_STRING, std::get<5>(us), 6, strLen);
 
         return values;
@@ -270,13 +294,10 @@ private:
     {
         std::shared_ptr<MYSQL_BIND> values((MYSQL_BIND*) std::calloc(3, sizeof(MYSQL_BIND)));
         long unsigned int strLen = 1024;
-
-        repository_utility::construct_param_bind_long(values, MYSQL_TYPE_LONG, userSalt.id, 0);
-
         auto tmp = &salt;
 
+        repository_utility::construct_param_bind_long(values, MYSQL_TYPE_LONG, userSalt.id, 0);
         repository_utility::construct_param_bind_cstring(values, MYSQL_TYPE_STRING, &(*tmp)[0], 1, strLen);
-
         repository_utility::construct_param_bind_long(values, MYSQL_TYPE_LONG, userSalt.user_id, 2);
 
         return values;

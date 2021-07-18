@@ -7,6 +7,7 @@
 #include <sstream>
 #include <memory>
 #include <vector>
+#include <utility>
 
 
 #include <mysql/mysql.h>
@@ -80,34 +81,20 @@ protected:
         return conn;
     }
 
-    /**
-    template<typename MySQLDataType = enum_field_types, typename type = int>
-    MYSQL_BIND construct_param(MySQLDataType buffer_type, const type buffer)
+    std::shared_ptr<MYSQL_BIND> mysql_bind_init(const int size)
     {
-        MYSQL_BIND param;
-        // std::memset(param, 0, sizeof(param));
-        //
-        param.buffer_type = buffer_type;
-        //
-        switch (buffer_type)
-        {
-            case MYSQL_TYPE_LONG:
-                param.buffer = (char *)&buffer;
-                param.length = 0;
-                param.is_null = 0;
-                break;
-            case MYSQL_TYPE_STRING:
-                param.buffer_type = buffer_type;
-                // param.buffer = (char *)buffer.c_str();
-                // param.length = &buffer.size();
-                param.is_null = 0;
-            default:
-                break;
-        }
+        std::shared_ptr<MYSQL_BIND> params((MYSQL_BIND *) std::calloc(size, sizeof(MYSQL_BIND)));
 
-        return param;
+        return params;
     }
-    */
+
+    std::pair<MYSQL *, MYSQL_STMT *> mysql_init_connection()
+    {
+        auto conn = setup_connection();
+        auto stmt = mysql_stmt_init(conn);
+
+        return std::make_pair(conn, stmt);
+    }
 
     MYSQL_RES *perform_query(MYSQL *conn, const std::string &query)
     {
@@ -119,6 +106,12 @@ protected:
         }
 
         return mysql_use_result(conn);
+    }
+
+    void close_mysql_connection(MYSQL *connection, MYSQL_STMT *statement)
+    {
+        mysql_stmt_close(statement);
+        mysql_close(connection);
     }
 
 
