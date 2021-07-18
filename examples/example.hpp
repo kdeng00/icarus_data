@@ -3,6 +3,10 @@
 
 #include <iostream>
 
+#include "icarus_data/icarus_data.h"
+
+using icarus_data::conn_string;
+
 namespace example {
 
 template<typename ConnString>

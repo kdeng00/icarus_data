@@ -4,6 +4,9 @@
 #include <mysql/mysql.h>
 
 #include "icarus_data/database/base_repository.h"
+#include "icarus_data/database/repoository_utility.h"
+
+using icarus_data::database::repository_utility;
 
 namespace icarus_data { namespace database {
 template<class User, class PassSec, typename SaltFilter, typename Filter, class ConnStr>
@@ -179,22 +182,6 @@ public:
         mysql_stmt_close(stmt);
         mysql_close(conn);
     }
-private:
-    struct UserLengths;
-    struct SaltLengths;
-
-    struct UserLengths {
-        unsigned long firstnameLength;
-        unsigned long lastnameLength;
-        unsigned long phoneLength;
-        unsigned long emailLength;
-        unsigned long usernameLength;
-        unsigned long passwordLength;
-    };
-    struct SaltLengths {
-        unsigned long saltLength;
-    };
-
 
     void saveUserSalt(const PassSec &userSec)
     {
@@ -218,6 +205,23 @@ private:
         mysql_stmt_close(stmt);
         mysql_close(conn);
     }
+private:
+    struct UserLengths;
+    struct SaltLengths;
+
+    struct UserLengths {
+        unsigned long firstnameLength;
+        unsigned long lastnameLength;
+        unsigned long phoneLength;
+        unsigned long emailLength;
+        unsigned long usernameLength;
+        unsigned long passwordLength;
+    };
+    struct SaltLengths {
+        unsigned long saltLength;
+    };
+
+
 
 
     std::shared_ptr<MYSQL_BIND> insertUserValues(const User &user, 
@@ -225,6 +229,9 @@ private:
     {
         std::shared_ptr<MYSQL_BIND> values((MYSQL_BIND*) std::calloc(6, sizeof(MYSQL_BIND)));
 
+        auto mysql_type = MYSQL_TYPE_STRING;
+
+        /**
         values.get()[0].buffer_type = MYSQL_TYPE_STRING;
         values.get()[0].buffer = (char*)user.firstname.c_str();
         values.get()[0].length = &(lengths->firstnameLength);
@@ -254,6 +261,16 @@ private:
         values.get()[5].buffer = (char*)user.password.c_str();
         values.get()[5].length = &(lengths->passwordLength);
         values.get()[5].is_null = 0;
+        */
+
+        repository_utility::construct_user_insert_string(values, mysql_type, user.firstname, 0, lengths->firstnameLength);
+        repository_utility::construct_user_insert_string(values, mysql_type, user.lastname, 1, lengths->lastnameLength);
+        repository_utility::construct_user_insert_string(values, mysql_type, user.phone, 2, lengths->phoneLength);
+        repository_utility::construct_user_insert_string(values, mysql_type, user.email, 3, lengths->emailLength);
+        repository_utility::construct_user_insert_string(values, mysql_type, user.username, 4, lengths->usernameLength);
+        repository_utility::construct_user_insert_string(values, mysql_type, user.password, 5, lengths->passwordLength);
+
+        // repository_utility::construct_user_insert_long(values, MYSQL_TYPE_LONG, passSec.user_id, 1);
 
         return values;
     }
@@ -262,12 +279,18 @@ private:
     {
         std::shared_ptr<MYSQL_BIND> values((MYSQL_BIND*) std::calloc(6, sizeof(MYSQL_BIND)));
 
+        /**
         values.get()[0].buffer_type = MYSQL_TYPE_STRING;
         values.get()[0].buffer = (char*)passSec.hash_password.c_str();
         values.get()[0].length = &(lengths->saltLength);
+        */
+        repository_utility::construct_user_insert_string(values, MYSQL_TYPE_STRING, passSec.hash_password, 0, lengths->saltLength);
 
+        /**
         values.get()[1].buffer_type = MYSQL_TYPE_LONG;
         values.get()[1].buffer = (char*)&passSec.user_id;
+        */
+        repository_utility::construct_user_insert_long(values, MYSQL_TYPE_LONG, passSec.user_id, 1);
 
         return values;
     }
@@ -298,8 +321,9 @@ private:
     std::shared_ptr<MYSQL_BIND> saltValueBind(PassSec &userSalt, char *salt)
     {
         std::shared_ptr<MYSQL_BIND> values((MYSQL_BIND*) std::calloc(3, sizeof(MYSQL_BIND)));
-        constexpr auto strLen = 1024;
+        long unsigned int strLen = 1024;
 
+        /**
         values.get()[0].buffer_type = MYSQL_TYPE_LONG;
         values.get()[0].buffer = (char*)&userSalt.id;
 
@@ -310,6 +334,18 @@ private:
 
         values.get()[2].buffer_type = MYSQL_TYPE_LONG;
         values.get()[2].buffer = (char*)&userSalt.user_id;
+        */
+
+        repository_utility::construct_param_bind_long(values, MYSQL_TYPE_LONG, userSalt.id, 0);
+
+        auto tmp = &salt;
+        std::string t = salt;
+
+        // repository_utility::construct_param_bind_string(values, MYSQL_TYPE_STRING, t, 1, strLen);
+        // repository_utility::construct_param_bind_cstring(values, MYSQL_TYPE_STRING, t, 1, strLen);
+        repository_utility::construct_param_bind_cstring(values, MYSQL_TYPE_STRING, &(*tmp)[0], 1, strLen);
+
+        repository_utility::construct_param_bind_long(values, MYSQL_TYPE_LONG, userSalt.user_id, 2);
 
         return values;
     }

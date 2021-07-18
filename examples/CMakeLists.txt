@@ -61,6 +61,7 @@ add_subdirectory(${ICARUS_DATA_ROOT}/icarus_data ${ICARUS_DATA_BUILD_OUTPUT})
 # TODO: Add examples that cover fetching, updating, creating, and deleting
 
 set(EXAMPLES
+    create_users
     fetch_albums
     fetch_songs
     fetch_users
