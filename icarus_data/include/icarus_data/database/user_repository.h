@@ -110,13 +110,6 @@ public:
         case Filter::username:
             qry << "Username = ?";
 
-            /**
-            params[0].buffer_type = MYSQL_TYPE_STRING;
-            params[0].buffer = (char*)user.username.c_str();
-            params[0].length = &userLength;
-            params[0].is_null = 0;
-            */
-
             repository_utility::construct_param_long(params, MYSQL_TYPE_STRING, user.username, 0, userLength);
             break;
         default:
@@ -231,46 +224,12 @@ private:
 
         auto mysql_type = MYSQL_TYPE_STRING;
 
-        /**
-        values.get()[0].buffer_type = MYSQL_TYPE_STRING;
-        values.get()[0].buffer = (char*)user.firstname.c_str();
-        values.get()[0].length = &(lengths->firstnameLength);
-        values.get()[0].is_null = 0;
-
-        values.get()[1].buffer_type = MYSQL_TYPE_STRING;
-        values.get()[1].buffer = (char*)user.lastname.c_str();
-        values.get()[1].length = &(lengths->lastnameLength);
-        values.get()[1].is_null = 0;
-
-        values.get()[2].buffer_type = MYSQL_TYPE_STRING;
-        values.get()[2].buffer = (char*)user.phone.c_str();
-        values.get()[2].length = &(lengths->phoneLength);
-        values.get()[2].is_null = 0;
-
-        values.get()[3].buffer_type = MYSQL_TYPE_STRING;
-        values.get()[3].buffer = (char*)user.email.c_str();
-        values.get()[3].length = &(lengths->emailLength);
-        values.get()[3].is_null = 0;
-
-        values.get()[4].buffer_type = MYSQL_TYPE_STRING;
-        values.get()[4].buffer = (char*)user.username.c_str();
-        values.get()[4].length = &(lengths->usernameLength);
-        values.get()[4].is_null = 0;
-
-        values.get()[5].buffer_type = MYSQL_TYPE_STRING;
-        values.get()[5].buffer = (char*)user.password.c_str();
-        values.get()[5].length = &(lengths->passwordLength);
-        values.get()[5].is_null = 0;
-        */
-
         repository_utility::construct_user_insert_string(values, mysql_type, user.firstname, 0, lengths->firstnameLength);
         repository_utility::construct_user_insert_string(values, mysql_type, user.lastname, 1, lengths->lastnameLength);
         repository_utility::construct_user_insert_string(values, mysql_type, user.phone, 2, lengths->phoneLength);
         repository_utility::construct_user_insert_string(values, mysql_type, user.email, 3, lengths->emailLength);
         repository_utility::construct_user_insert_string(values, mysql_type, user.username, 4, lengths->usernameLength);
         repository_utility::construct_user_insert_string(values, mysql_type, user.password, 5, lengths->passwordLength);
-
-        // repository_utility::construct_user_insert_long(values, MYSQL_TYPE_LONG, passSec.user_id, 1);
 
         return values;
     }
@@ -279,17 +238,8 @@ private:
     {
         std::shared_ptr<MYSQL_BIND> values((MYSQL_BIND*) std::calloc(6, sizeof(MYSQL_BIND)));
 
-        /**
-        values.get()[0].buffer_type = MYSQL_TYPE_STRING;
-        values.get()[0].buffer = (char*)passSec.hash_password.c_str();
-        values.get()[0].length = &(lengths->saltLength);
-        */
         repository_utility::construct_user_insert_string(values, MYSQL_TYPE_STRING, passSec.hash_password, 0, lengths->saltLength);
 
-        /**
-        values.get()[1].buffer_type = MYSQL_TYPE_LONG;
-        values.get()[1].buffer = (char*)&passSec.user_id;
-        */
         repository_utility::construct_user_insert_long(values, MYSQL_TYPE_LONG, passSec.user_id, 1);
 
         return values;
@@ -312,8 +262,6 @@ private:
 
         repository_utility::construct_param_bind_cstring(values, MYSQL_TYPE_STRING, std::get<4>(us), 5, strLen);
 
-        // auto &tmp = std::get<5>(us);
-
         repository_utility::construct_param_bind_cstring(values, MYSQL_TYPE_STRING, std::get<5>(us), 6, strLen);
 
         return values;
@@ -323,26 +271,10 @@ private:
         std::shared_ptr<MYSQL_BIND> values((MYSQL_BIND*) std::calloc(3, sizeof(MYSQL_BIND)));
         long unsigned int strLen = 1024;
 
-        /**
-        values.get()[0].buffer_type = MYSQL_TYPE_LONG;
-        values.get()[0].buffer = (char*)&userSalt.id;
-
-
-        values.get()[1].buffer_type = MYSQL_TYPE_STRING;
-        values.get()[1].buffer = (char*)salt;
-        values.get()[1].buffer_length = strLen;
-
-        values.get()[2].buffer_type = MYSQL_TYPE_LONG;
-        values.get()[2].buffer = (char*)&userSalt.user_id;
-        */
-
         repository_utility::construct_param_bind_long(values, MYSQL_TYPE_LONG, userSalt.id, 0);
 
         auto tmp = &salt;
-        std::string t = salt;
 
-        // repository_utility::construct_param_bind_string(values, MYSQL_TYPE_STRING, t, 1, strLen);
-        // repository_utility::construct_param_bind_cstring(values, MYSQL_TYPE_STRING, t, 1, strLen);
         repository_utility::construct_param_bind_cstring(values, MYSQL_TYPE_STRING, &(*tmp)[0], 1, strLen);
 
         repository_utility::construct_param_bind_long(values, MYSQL_TYPE_LONG, userSalt.user_id, 2);
