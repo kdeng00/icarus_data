@@ -39,6 +39,15 @@ namespace icarus_data
     using genre = models::genre<std::string>;
     using song = models::song<std::string, id_data_type, conn_string>;
 
+    using song_filter = types::song_filter;
+    using artist_filter = types::artist_filter;
+    using album_filter = types::album_filter;
+    using genre_filter = types::genre_filter;
+    using cover_art_filter = types::cover_filter;
+    using token_filter = types::token_filter;
+    using user_filter = types::user_filter;
+    using salt_filter = types::salt_filter;
+
     using album_repository = database::album_repository<album, types::album_filter, conn_string>;
     using artist_repository = database::artist_repository<artist, types::artist_filter, conn_string>;
     using cover_art_repository = database::cover_art_repository<cover_art, types::cover_filter, conn_string>;

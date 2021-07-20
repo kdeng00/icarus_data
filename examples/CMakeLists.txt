@@ -62,9 +62,11 @@ add_subdirectory(${ICARUS_DATA_ROOT}/icarus_data ${ICARUS_DATA_BUILD_OUTPUT})
 
 set(EXAMPLES
     create_users
+    delete_users
     fetch_albums
     fetch_songs
     fetch_users
+    update_users
 )
 
 foreach (example ${EXAMPLES})

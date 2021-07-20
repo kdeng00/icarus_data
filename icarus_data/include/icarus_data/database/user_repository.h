@@ -178,7 +178,7 @@ public:
         auto stmt = mysql_stmt_init(conn);
 
         std::stringstream qry;
-        qry << "DELETE FROM " << this->tablename << " WHERE UserId = ?";
+        qry << "DELETE FROM " << this->table_name << " WHERE UserId = ?";
         const auto query = qry.str();
 
         auto params = this->mysql_bind_init(1);
@@ -186,10 +186,10 @@ public:
         repository_utility::construct_param_long(params, MYSQL_TYPE_LONG, user.id, 0);
 
         auto status = mysql_stmt_prepare(stmt, query.c_str(), query.size());
-        status = mysql_stmt_bind_param(stmt, params);
+        status = mysql_stmt_bind_param(stmt, params.get());
         status = mysql_stmt_execute(stmt);
 
-        close_mysql_connection(conn, stmt);
+        this->close_mysql_connection(conn, stmt);
 
         return status;
     }
@@ -200,7 +200,7 @@ public:
         auto stmt = mysql_stmt_init(conn);
 
         std::stringstream qry;
-        qry << "UPDATE " << this->tablename << " SET Firstname = ?, LastName = ?, Email = ?, ";
+        qry << "UPDATE " << this->table_name << " SET Firstname = ?, LastName = ?, Email = ?, ";
         qry << "Phone = ?, Username = ?, Password = ? ";
         qry << "WHERE UserId = ?";
         const auto query = qry.str();
@@ -211,11 +211,13 @@ public:
         auto mysql_string = MYSQL_TYPE_STRING;
         auto mysql_long = MYSQL_TYPE_LONG;
 
+        auto usernameLength = user.firstname.size();
+
         // TODO: Pick up back here. Finish up Updating and Deleting for both User and Salt tables. Then
         // move on to the music-related databases classes
-        repository_utility::construct_param_string(params, mysql_string, user.firstname, 0, user.firstname.size());
+        repository_utility::construct_param_string(params, mysql_string, user.firstname, 0, usernameLength);
+        // repository_utility::construct_param_string(params,)
         /**
-        repository_utility::construct_param_string(params,)
         repository_utility::construct_param_string(params,)
         repository_utility::construct_param_string(params,)
         repository_utility::construct_param_string(params,)
@@ -228,6 +230,32 @@ public:
 
         this->close_mysql_connection(conn, stmt);
 
+    }
+
+    int delete_salt(const PassSec &userSec)
+    {
+        auto conn = this->setup_connection();
+        auto stmt = mysql_stmt_init(conn);
+
+        std::stringstream qry;
+        qry << "DELETE FROM Salt WHERE SaltId = ?";
+        const auto query = qry.str();
+
+        auto params = this->mysql_bind_init(1);
+
+        repository_utility::construct_param_long(params, MYSQL_TYPE_LONG, userSec.id, 0);
+
+        auto status = mysql_stmt_prepare(stmt, query.c_str(), query.size());
+        status = mysql_stmt_bind_param(stmt, params.get());
+        status = mysql_stmt_execute(stmt);
+
+        this->close_mysql_connection(conn, stmt);
+
+        return status;
+    }
+
+    int update_salt(const PassSec &userSec)
+    {
     }
 private:
     struct UserLengths;
