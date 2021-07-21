@@ -207,29 +207,31 @@ public:
 
         auto status = mysql_stmt_prepare(stmt, query.c_str(), query.size());
 
-        auto params = this->mysql_bind_init(12);
+        auto params = this->mysql_bind_init(7);
         auto mysql_string = MYSQL_TYPE_STRING;
         auto mysql_long = MYSQL_TYPE_LONG;
 
-        auto usernameLength = user.firstname.size();
+        auto firstname_length = user.firstname.size();
+        auto lastname_length = user.lastname.size();
+        auto email_length = user.email.size();
+        auto phone_length = user.phone.size();
+        auto username_length = user.username.size();
+        auto password_length = user.password.size();
 
-        // TODO: Pick up back here. Finish up Updating and Deleting for both User and Salt tables. Then
-        // move on to the music-related databases classes
-        repository_utility::construct_param_string(params, mysql_string, user.firstname, 0, usernameLength);
-        // repository_utility::construct_param_string(params,)
-        /**
-        repository_utility::construct_param_string(params,)
-        repository_utility::construct_param_string(params,)
-        repository_utility::construct_param_string(params,)
-        repository_utility::construct_param_string(params,)
-        repository_utility::construct_param_long(params,)
-        */
+        repository_utility::construct_param_string(params, mysql_string, user.firstname, 0, firstname_length);
+        repository_utility::construct_param_string(params, mysql_string, user.lastname, 1, lastname_length);
+        repository_utility::construct_param_string(params, mysql_string, user.email, 2, email_length);
+        repository_utility::construct_param_string(params, mysql_string, user.phone, 3, phone_length);
+        repository_utility::construct_param_string(params, mysql_string, user.username, 4, username_length);
+        repository_utility::construct_param_string(params, mysql_string, user.password, 5, password_length);
+        repository_utility::construct_param_long(params, mysql_long, user.id, 6);
 
         status = mysql_stmt_bind_param(stmt, params.get());
         status = mysql_stmt_execute(stmt);
 
         this->close_mysql_connection(conn, stmt);
 
+        return status;
     }
 
     int delete_salt(const PassSec &userSec)
@@ -256,6 +258,31 @@ public:
 
     int update_salt(const PassSec &userSec)
     {
+        auto conn = this->setup_connection();
+        auto stmt = mysql_stmt_init(conn);
+
+        std::stringstream qry;
+        qry << "UPDATE Salt SET Salt = ?, UserId = ? WHERE SaltId = ?";
+        const auto query = qry.str();
+
+        auto status = mysql_stmt_prepare(stmt, query.c_str(), query.size());
+
+        auto params = this->mysql_bind_init(3);
+        auto mysql_string = MYSQL_TYPE_STRING;
+        auto mysql_long = MYSQL_TYPE_LONG;
+
+        auto salt_length = userSec.salt.size();
+
+        repository_utility::construct_param_string(params, mysql_string, userSec.salt, 0, salt_length);
+        repository_utility::construct_param_long(params, mysql_long, userSec.user_id, 1);
+        repository_utility::construct_param_long(params, mysql_long, userSec.id, 2);
+
+        status = mysql_stmt_bind_param(stmt, params.get());
+        status = mysql_stmt_execute(stmt);
+
+        this->close_mysql_connection(conn, stmt);
+
+        return status;
     }
 private:
     struct UserLengths;
@@ -274,8 +301,6 @@ private:
     };
 
 
-
-
     std::shared_ptr<MYSQL_BIND> insertUserValues(const User &user, 
             std::shared_ptr<UserLengths> lengths)
     {
@@ -292,6 +317,7 @@ private:
 
         return values;
     }
+
     std::shared_ptr<MYSQL_BIND> insertSaltValues(const PassSec &passSec, 
             std::shared_ptr<SaltLengths> lengths)
     {
@@ -302,6 +328,7 @@ private:
 
         return values;
     }
+
     std::shared_ptr<MYSQL_BIND> valueBind(User &user, 
             std::tuple<char*, char*, char*, char*, char*, char*> &us)
     {
