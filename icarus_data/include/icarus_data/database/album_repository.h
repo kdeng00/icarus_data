@@ -12,13 +12,15 @@
 #include <mysql/mysql.h>
 
 #include "icarus_data/database/base_repository.h"
+#include "icarus_data/database/repoository_utility.h"
 
 namespace icarus_data { namespace database {
 template<class Album, typename Filter, class ConnStr>
 class album_repository : public base_repository<ConnStr>
 {
 public:
-    album_repository(const ConnStr &conn_str) : base_repository<ConnStr>(conn_str)
+    album_repository(const ConnStr &conn_str, const std::string table = "Album") : 
+        base_repository<ConnStr>(conn_str, table)
     {
     }
 
@@ -33,8 +35,7 @@ public:
 
         auto albums = parseRecords(stmt);
 
-        mysql_stmt_close(stmt);
-        mysql_close(conn);
+        this->close_mysql_connection(conn, stmt);
 
         return albums;
     }
@@ -46,21 +47,17 @@ public:
         auto conn = this->setup_connection();
         auto stmt = mysql_stmt_init(conn);
 
-        MYSQL_BIND params[1];
-        std::memset(params, 0, sizeof(params));
+        auto params = this->mysql_bind_init(1);
 
         qry << "SELECT alb.*, COUNT(*) AS SongCount FROM Album alb LEFT JOIN ";
         qry << "Song sng ON alb.AlbumId=sng.AlbumId WHERE ";
 
         switch (filter)
         {
-        case Filter::id:
+        case Filter::ID:
             qry << "sng.AlbumId = ?";
 
-            params[0].buffer_type = MYSQL_TYPE_LONG;
-            params[0].buffer = (char*)&album.id;
-            params[0].length = 0;
-            params[0].is_null = 0;
+            repository_utility::construct_param_long(params, MYSQL_TYPE_LONG, album.id, 0);
             break;
         default:
             break;
@@ -70,15 +67,14 @@ public:
         const auto query = qry.str();
 
         auto status = mysql_stmt_prepare(stmt, query.c_str(), query.size());
-        status = mysql_stmt_bind_param(stmt, params);
+        status = mysql_stmt_bind_param(stmt, params.get());
         status = mysql_stmt_execute(stmt);
 
-        auto albWSC = parseRecordWithSongCount(stmt);
+        auto albWSC = parse_records_with_song_count(stmt);
 
-        mysql_stmt_close(stmt);
-        mysql_close(conn);
+        this->close_mysql_connection(conn, stmt);
 
-        return albWSC;
+        return albWSC.at(0);
     }
 
     Album retrieveRecord(Album &album, Filter filter)
@@ -88,29 +84,23 @@ public:
         auto conn = this->setup_connection();
         auto stmt = mysql_stmt_init(conn);
 
-        MYSQL_BIND params[1];
-        memset(params, 0, sizeof(params));
+        auto params = this->mysql_bind_init(1);
 
         qry << "SELECT alb.* FROM Album alb WHERE ";
 
         auto titleLength = album.title.size();
+
         switch (filter)
         {
-        case Filter::id:
+        case Filter::ID:
             qry << "alb.AlbumId = ?";
 
-            params[0].buffer_type = MYSQL_TYPE_LONG;
-            params[0].buffer = (char*)&album.id;
-            params[0].length = 0;
-            params[0].is_null = 0;
+            repository_utility::construct_param_long(params, MYSQL_TYPE_LONG, album.id, 0);
             break;
-        case Filter::title:
+        case Filter::TITLE:
             qry << "alb.Title = ?";
 
-            params[0].buffer_type = MYSQL_TYPE_STRING;
-            params[0].buffer = (char*)album.title.c_str();
-            params[0].length = &titleLength;
-            params[0].is_null = 0;
+            repository_utility::construct_param_string(params, MYSQL_TYPE_STRING, album.title, 0, titleLength);
             break;
         default:
             break;
@@ -120,17 +110,16 @@ public:
 
         const auto query = qry.str();
         auto status = mysql_stmt_prepare(stmt, query.c_str(), query.size());
-        status = mysql_stmt_bind_param(stmt, params);
+        status = mysql_stmt_bind_param(stmt, params.get());
         status = mysql_stmt_execute(stmt);
 
-        album = parseRecord(stmt);
+        const auto albums = parseRecords(stmt);
 
-        mysql_stmt_close(stmt);
-        mysql_close(conn);
+        this->close_mysql_connection(conn, stmt);
 
         std::cout << "done\n";
 
-        return album;
+        return (albums.size() > 0) ? albums.at(0) : album;
     }
 
     bool doesAlbumExists(const Album &album, Filter filter)
@@ -270,7 +259,6 @@ private:
 
         const auto valAmt = 3;
         unsigned long len[valAmt];
-        // my_bool nullRes[valAmt];
         char nullRes[valAmt];
 
         for (auto status = 0; status == 0; status = mysql_stmt_next_result(stmt))
@@ -300,35 +288,46 @@ private:
         return albums;
     }
 
-    std::pair<Album, int> parseRecordWithSongCount(MYSQL_STMT *stmt)
+    std::vector<std::pair<Album, int>> parse_records_with_song_count(MYSQL_STMT *stmt)
     {
         std::cout << "parsing album record with song count\n";
         mysql_stmt_store_result(stmt);
-        auto rowCount = mysql_stmt_num_rows(stmt);
 
-        Album album;
-        auto metaBuff = metadataBuffer();
-        int songCount = 0;
-        auto val = valueBindWithSongCount(album, metaBuff, songCount);
+        std::vector<std::pair<Album, int>> albums;
+        albums.reserve(mysql_stmt_num_rows(stmt));
 
-        if (rowCount == 0)
+        const auto valAmt = 3;
+        unsigned long len[valAmt];
+        char nullRes[valAmt];
+
+        for (auto status = 0; status == 0; status = mysql_stmt_next_result(stmt))
         {
-            std::cout << "no results\n";
-            return std::make_pair(album, songCount);
+            if (mysql_stmt_field_count(stmt) > 0)
+            {
+                Album alb;
+                auto metaBuff = metadataBuffer();
+                auto song_count = 0;
+                auto bindedValues = valueBindWithSongCount(alb, metaBuff, song_count);
+                status = mysql_stmt_bind_result(stmt, bindedValues.get());
+
+                while (true)
+                {
+                    std::cout << "fetching statement result\n";
+                    status = mysql_stmt_fetch(stmt);
+
+                    if (status == 1 || status == MYSQL_NO_DATA) break;
+
+                    alb.title = std::get<0>(metaBuff);
+                    alb.artist = std::get<1>(metaBuff);
+                    albums.push_back(std::make_pair(std::move(alb), song_count));
+                }
+            }
+            std::cout << "fetching next result\n";
         }
 
-        auto status = mysql_stmt_bind_result(stmt, val.get());
-        status = mysql_stmt_fetch(stmt);
-
-        album.title = std::get<0>(metaBuff);
-        album.artist = std::get<1>(metaBuff);
-
-        std::cout << "done parsing album record with song count\n";
-
-        auto albWSC = std::make_pair(album, songCount);
-
-        return albWSC;
+        return albums;
     }
+
 
     std::shared_ptr<MYSQL_BIND> valueBind(Album &album, 
             std::tuple<char*, char*> &metadata)
@@ -389,26 +388,6 @@ private:
         char artist[wordLen];
 
         return std::make_tuple(title, artist);
-    }
-
-    Album parseRecord(MYSQL_STMT *stmt)
-    {
-        std::cout << "parsing album record\n";
-        mysql_stmt_store_result(stmt);
-        auto rows = mysql_stmt_num_rows(stmt);
-
-        Album album;
-        auto metaBuff = metadataBuffer();
-        auto bindedValues = valueBind(album, metaBuff);
-        auto status = mysql_stmt_bind_result(stmt, bindedValues.get());
-        status = mysql_stmt_fetch(stmt);
-
-        album.title = std::get<0>(metaBuff);
-        album.artist = std::get<1>(metaBuff);
-
-        std::cout << "done parsing album record\n";
-
-        return album;
     }
 };
 }}
